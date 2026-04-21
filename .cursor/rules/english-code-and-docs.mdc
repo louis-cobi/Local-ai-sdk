@@ -1,0 +1,10 @@
+---
+description: English-first for code comments, docs, and user-facing strings in this repo
+globs: "**/*.{ts,tsx,js,jsx,md}"
+alwaysApply: false
+---
+
+# English-first (code and documentation)
+
+- Write **comments**, **TSDoc/JSDoc**, **README**, and **user-facing error messages** in **English**.
+- Prefer English for technical specs (roadmaps, architecture notes) unless the audience is explicitly French-only.
