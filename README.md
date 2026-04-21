@@ -1,75 +1,85 @@
-# local-ai-sdk
+# local-ai-sdk (monorepo)
 
-Stateful, mobile-first helper library for running local LLMs via [`llama.rn`](https://github.com/mybigday/llama.rn).
+Stateful, mobile-first helpers for on-device LLMs.
 
-## Goals
+| Package | Description |
+|--------|-------------|
+| [`local-ai-sdk`](packages/local-ai-sdk) | **Main install**: engine + re-exports **Llama** adapter and **HF download** helpers (depends on the two packages below) |
+| [`local-ai-sdk-models`](packages/local-ai-sdk-models) | Hugging Face download / cache (also pulled in by `local-ai-sdk`) |
+| [`local-ai-sdk-llama`](packages/local-ai-sdk-llama) | [`llama.rn`](https://github.com/mybigday/llama.rn) `LLMProvider` (also pulled in by `local-ai-sdk`) |
+| [`local-ai-sdk-bundle`](packages/local-ai-sdk-bundle) | **Deprecated** — thin alias of `local-ai-sdk` |
 
-- **Stateful sessions**: prefill an immutable system/tools seed once (`n_predict: 0`), persist KV state with `saveSession` / `loadSession`.
-- **Small prompts each turn**: inject `summary → RAG memory → short window → user` without re-sending the full system seed.
-- **Tools**: native llama.rn tool calling (`tool_choice: 'auto'`) or a JSON fallback mode for smaller models.
-- **Optional RAG**: `remember()` / `recall()` with an in-memory vector store (swap for SQLite-vec in your app).
+## Documentation
 
-## Install
+| Doc | Contents |
+|-----|----------|
+| [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) | Single-package install, API, multimodal, RN session storage |
+| [docs/PUBLISHING.md](docs/PUBLISHING.md) | How to publish workspace packages to npm |
+| [docs/POLYFILLS.md](docs/POLYFILLS.md) | `react-native-blob-util` vs Callstack; Vercel `ai` polyfills |
+| [plan/SDK-ROADMAP.md](plan/SDK-ROADMAP.md) | Architecture and roadmap |
+
+## Using this from another project
+
+After publish:
 
 ```bash
 npm install local-ai-sdk llama.rn react
 ```
 
-`react` is optional unless you import `useLocalChat`.
+```ts
+import { createEngine, createLlamaRNProvider, downloadModel } from 'local-ai-sdk';
+```
 
-## Quick start (React Native)
+See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md).
+
+## Install (developing this repo)
+
+```bash
+npm install
+npm run build
+```
+
+## Quick start
 
 ```ts
-import { createEngine, createLlamaRNProvider, defineTool } from 'local-ai-sdk';
+import { createEngine, createLlamaRNProvider, downloadModel } from 'local-ai-sdk';
 
-const timeTool = defineTool({
-  name: 'get_time',
-  description: 'Return the current time (ISO string).',
-  parameters: { type: 'object', properties: {} },
-  execute: async () => new Date().toISOString(),
+const modelPath = await downloadModel({
+  repoId: 'ggml-org/gemma-4-E2B-it-GGUF',
+  filename: 'gemma-4-e2b-it-Q8_0.gguf',
+  destinationDir: '/path/to/cache',
 });
 
 const provider = createLlamaRNProvider({
-  modelPath: 'file:///path/to/model.gguf',
-  contextSize: 4096,
-  n_gpu_layers: 99,
-  ctx_shift: true,
-  embedding: true, // required for remember/recall
+  modelPath: `file://${modelPath}`,
+  contextSize: 8192,
+  mmprojPath: 'file:///path/to/mmproj-gemma-4-e2b-it-f16.gguf',
+  embedding: true,
 });
 
 const engine = createEngine({
   provider,
   systemPrompt: 'You are a concise on-device assistant.',
-  tools: [timeTool],
-  session: {
-    path: '/absolute/path/to/session.bin',
-    autoSave: true,
-    // storage: myRnfsAdapter, // recommended in RN (Node uses fs automatically)
-  },
-  memory: { windowSize: 4, summaryThreshold: 20, ragTopK: 5 },
-  seedExtras: ['file:///path/to/model.gguf', '4096'],
+  seedExtras: ['gemma-4-e2b', '8192'],
 });
-
 await engine.init();
-await engine.sendMessage('What time is it?');
+await engine.sendMessage({ text: 'Describe the image.', mediaParts: [{ type: 'image', uri: 'file:///path/to/photo.jpg' }] });
 ```
 
-## Session metadata
+For RN/Expo large-file downloads, see adapter-based options in [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) (`createExpoFileSystemAdapter`, `createBlobUtilAdapter`, `downloadModelWithAdapter`).
 
-Binary KV state is stored at `session.path`. Chat UI state (messages, summary, counters) is stored in a small JSON file next to it (default: `${session.path}.meta.json`). On React Native you should pass `session.storage` to read/write those files with your FS module.
+## Gemma 4 (E2B / E4B) on device
 
-## API surface (intentionally small)
-
-- `createLlamaRNProvider`
-- `createEngine` / `LocalFirstEngine`
-- `defineTool`
-- `useLocalChat`
-- `InMemoryVectorStore` (bring your own persistent store when needed)
+- **E2B** and **E4B** are multimodal instruction-tuned models (text + image; small variants often support audio input). See the [Gemma 4 announcement](https://huggingface.co/blog/gemma4).
+- You need the **main GGUF** and the matching **`mmproj`** file from the same Hugging Face repo (e.g. [ggml-org/gemma-4-E2B-it-GGUF](https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF)).
+- Use a **realistic `n_ctx`** on phones (e.g. 4096–8192) even though marketing lists 128k.
+- Prefer **`ctx_shift: false`** for multimodal; `local-ai-sdk-llama` sets this automatically when `mmprojPath` is provided.
+- **Embeddings for RAG** usually require a separate embedding-capable setup; do not assume the chat GGUF doubles as an embedder unless your build supports it.
 
 ## Scripts
 
-- `npm run build` – build ESM/CJS + types (`tsup`)
-- `npm test` – unit tests (`vitest`)
+- `npm run build` — build workspaces in dependency order  
+- `npm test` — run Vitest across packages  
 
 ## License
 

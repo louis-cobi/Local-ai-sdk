@@ -1,6 +1,6 @@
-# local-ai-sdk — roadmap (V0 → V1)
+# local-ai-sdk — roadmap (V0 → V1 → V2)
 
-This document captures the shipped architecture and the planned evolution of `local-ai-sdk`.
+This document captures the shipped architecture and the planned evolution of the monorepo (`packages/local-ai-sdk`, `local-ai-sdk-models`, `local-ai-sdk-llama`).
 
 ## V0 (mobile-first core) — implemented
 
@@ -24,10 +24,24 @@ This document captures the shipped architecture and the planned evolution of `lo
   - Replace the in-memory store with SQLite-vec / `op-sqlite` for durable embeddings.
   - Add optional grammar / JSON-schema helpers (`response_format`) for strict structured outputs.
 
+## V2 (parity + multimodal) — implemented
+
+- **Monorepo**: `local-ai-sdk-models` (Hugging Face download/cache), `local-ai-sdk-llama` (llama.rn provider with optional `mmproj`), and **`local-ai-sdk`** as the **default consumer package** — it depends on the other two and re-exports their APIs. Optional: install subpackages alone for edge cases.
+- **Zod tools**: `defineToolZod` + validation in `ToolRegistry` before `execute`.
+- **Multimodal user turns**: `sendMessage({ text, mediaParts })` with `file://` URIs; metadata stores URIs only (no base64 blobs).
+- **Model downloads**: `downloadModel` / `getModelPathIfCached` / `huggingFaceResolveUrl` in `local-ai-sdk-models`.
+- **TTS**: `createSpeechSynthesizer` placeholder in `local-ai-sdk-llama` until a stable vocoder API exists on the native context.
+
+## V3 (desktop runtimes) — planned
+
+- **Desktop focus**: first-class `llama.cpp` support with ergonomic model/runtime management.
+- **`llama-swap` integration**: smoother model switching / process management for local desktop workflows.
+- **Potential adapters**: evaluate `Ollama` and `vLLM` backends while keeping the same stateful engine contract.
+
 ## Non-goals / cautions
 
-- **Context shifting** is treated as a safety net (`ctx_shift` in `createLlamaRNProvider`), not the primary memory architecture.
-- **Multimodal session files** may be limited upstream; keep sessions text-first.
+- **Context shifting**: `local-ai-sdk-llama` defaults `ctx_shift` to `false` when `mmprojPath` is set (multimodal); otherwise `true` as a safety net.
+- **Multimodal session files** may be limited upstream; validate `saveSession` / `loadSession` with your `llama.rn` build.
 - **`reset({ keepSeed: false })`** is not supported without creating a fresh llama context/provider.
 
 ## Repository conventions
