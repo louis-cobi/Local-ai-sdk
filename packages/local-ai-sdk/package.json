@@ -47,8 +47,7 @@
   "dependencies": {
     "local-ai-sdk-llama": "^0.1.0",
     "local-ai-sdk-models": "^0.1.0",
-    "zod": "^3.24.0",
-    "zod-to-json-schema": "^3.24.0"
+    "zod": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

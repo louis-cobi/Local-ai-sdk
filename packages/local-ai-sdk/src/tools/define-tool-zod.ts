@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { ToolDefinition } from './define-tool.js';
 
 /**
@@ -11,8 +10,8 @@ export function defineToolZod<T extends z.ZodRawShape>(opts: {
   input: z.ZodObject<T>;
   execute: (args: z.infer<z.ZodObject<T>>) => Promise<unknown> | unknown;
 }): ToolDefinition<z.infer<z.ZodObject<T>>> {
-  const parameters = zodToJsonSchema(opts.input, {
-    $refStrategy: 'none',
+  const parameters = z.toJSONSchema(opts.input, {
+    target: 'draft-7',
   }) as Record<string, unknown>;
 
   return {
