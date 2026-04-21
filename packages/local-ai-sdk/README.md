@@ -2,6 +2,8 @@
 
 Stateful on-device LLM runtime: seed KV (`n_predict: 0`), `saveSession` / `loadSession`, sliding window + summary + optional RAG, tools (`defineTool` / **`defineToolZod`**), multimodal user turns.
 
+`defineToolZod` targets Zod v4 (`z.toJSONSchema`).
+
 ## What is bundled
 
 This package **depends on** and **re-exports**:

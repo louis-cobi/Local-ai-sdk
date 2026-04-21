@@ -1,7 +1,7 @@
 {
   "name": "local-ai-sdk-bundle",
   "version": "0.1.0",
-  "description": "Deprecated alias: re-exports local-ai-sdk only. Use local-ai-sdk directly.",
+  "description": "Deprecated alias (to be removed in next minor): re-exports local-ai-sdk only. Use local-ai-sdk directly.",
   "keywords": [
     "local-ai-sdk",
     "deprecated"

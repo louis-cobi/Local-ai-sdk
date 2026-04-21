@@ -11,7 +11,9 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:packaging": "tsc -p tsconfig.packaging.json --noEmit",
+    "test:smoke:exports": "node ./tests/packaging/smoke-exports.mjs && node ./tests/packaging/smoke-exports.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

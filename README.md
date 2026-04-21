@@ -3,7 +3,7 @@
 Stateful, mobile-first helpers for on-device LLMs.
 
 | Package | Description |
-|--------|-------------|
+| ------- | ----------- |
 | [`local-ai-sdk`](packages/local-ai-sdk) | **Main install**: engine + re-exports **Llama** adapter and **HF download** helpers (depends on the two packages below) |
 | [`local-ai-sdk-models`](packages/local-ai-sdk-models) | Hugging Face download / cache (also pulled in by `local-ai-sdk`) |
 | [`local-ai-sdk-llama`](packages/local-ai-sdk-llama) | [`llama.rn`](https://github.com/mybigday/llama.rn) `LLMProvider` (also pulled in by `local-ai-sdk`) |
@@ -12,7 +12,7 @@ Stateful, mobile-first helpers for on-device LLMs.
 ## Documentation
 
 | Doc | Contents |
-|-----|----------|
+| --- | -------- |
 | [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) | Single-package install, API, multimodal, RN session storage |
 | [docs/PUBLISHING.md](docs/PUBLISHING.md) | How to publish workspace packages to npm |
 | [docs/POLYFILLS.md](docs/POLYFILLS.md) | `react-native-blob-util` vs Callstack; Vercel `ai` polyfills |
@@ -67,6 +67,21 @@ await engine.sendMessage({ text: 'Describe the image.', mediaParts: [{ type: 'im
 ```
 
 For RN/Expo large-file downloads, see adapter-based options in [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) (`createExpoFileSystemAdapter`, `createBlobUtilAdapter`, `downloadModelWithAdapter`).
+
+## Supported versions
+
+| Surface | Supported | Notes |
+| ------- | --------- | ----- |
+| Node.js | `>=18` | Packaging validation runs in `NodeNext` mode in CI. |
+| React Native | Active support | Use adapter-based downloads (`expo-file-system` or `react-native-blob-util`). |
+| llama.rn | `>=0.5.0` | Peer dependency for runtime provider usage. |
+| Zod | `v4` | `defineToolZod` uses `z.toJSONSchema` from Zod v4. |
+
+## Download reliability
+
+- `downloadModel` now supports streaming writes, retry/backoff, optional `AbortSignal`, and optional SHA-256 validation.
+- `downloadModelWithAdapter` keeps the same adapter flow for React Native and now accepts retry/signal/checksum options.
+- `llama-swap` is a runtime orchestration concern (planned in V3), not the transport used by `local-ai-sdk-models` downloads.
 
 ## Gemma 4 (E2B / E4B) on device
 

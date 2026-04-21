@@ -30,12 +30,15 @@ This document captures the shipped architecture and the planned evolution of the
 - **Zod tools**: `defineToolZod` + validation in `ToolRegistry` before `execute`.
 - **Multimodal user turns**: `sendMessage({ text, mediaParts })` with `file://` URIs; metadata stores URIs only (no base64 blobs).
 - **Model downloads**: `downloadModel` / `getModelPathIfCached` / `huggingFaceResolveUrl` in `local-ai-sdk-models`.
+  - Node path now uses streaming I/O, retry/backoff, optional `AbortSignal`, optional SHA-256 checks, and `.part` atomic writes.
+  - React Native adapter path supports the same high-level options (`signal`, `retry`, `checksum`) where adapter capabilities allow.
 - **TTS**: `createSpeechSynthesizer` placeholder in `local-ai-sdk-llama` until a stable vocoder API exists on the native context.
 
 ## V3 (desktop runtimes) — planned
 
 - **Desktop focus**: first-class `llama.cpp` support with ergonomic model/runtime management.
 - **`llama-swap` integration**: smoother model switching / process management for local desktop workflows.
+- **Download transport boundary**: `llama-swap` remains runtime orchestration; model download stays managed by `local-ai-sdk-models`.
 - **Potential adapters**: evaluate `Ollama` and `vLLM` backends while keeping the same stateful engine contract.
 
 ## Non-goals / cautions
@@ -47,3 +50,4 @@ This document captures the shipped architecture and the planned evolution of the
 ## Repository conventions
 
 - Code comments and technical docs are **English-first** (see `.cursor/rules/english-code-and-docs.mdc`).
+- `local-ai-sdk-bundle` is intentionally temporary and scheduled for removal in the next minor line.
