@@ -7,12 +7,16 @@
   ],
   "scripts": {
     "build": "npm run build -w local-ai-sdk-models && npm run build -w local-ai-sdk-llama && npm run build -w local-ai-sdk && npm run build -w local-ai-sdk-bundle",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "typescript": "^5.8.0",
+    "vitepress": "^1.6.4",
     "vitest": "^3.1.0"
   },
   "engines": {

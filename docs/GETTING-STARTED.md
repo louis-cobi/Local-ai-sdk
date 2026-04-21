@@ -116,5 +116,5 @@ Types ship with each package (`dist/index.d.ts`). Ensure `moduleResolution` is `
 
 - [Polyfills](./POLYFILLS.md) — `react-native-blob-util`, Vercel `ai`, RN polyfills  
 - [Publishing](./PUBLISHING.md) — publish order for the monorepo  
-- [Root README](../README.md) — Gemma 4 notes and layout  
-- [SDK roadmap](../plan/SDK-ROADMAP.md) — architecture  
+- [Root README](https://github.com/Cobi/Local-ai-sdk/blob/main/README.md) — Gemma 4 notes and layout  
+- [SDK roadmap](https://github.com/Cobi/Local-ai-sdk/blob/main/plan/SDK-ROADMAP.md) — architecture  
