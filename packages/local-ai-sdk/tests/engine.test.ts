@@ -178,6 +178,60 @@ describe('LocalFirstEngine', () => {
     expect(String(toolResultMsg?.content)).toContain('Unknown tool');
   });
 
+  it('handles malformed JSON tool payload as plain assistant text', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } },
+      { res: { text: '{"tool_call":', content: '{"tool_call":', tool_calls: [] } },
+    ]);
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      toolMode: 'json',
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    const out = await engine.sendMessage('run');
+    expect(out).toBe('{"tool_call":');
+  });
+
+  it('caps native tool loop to max rounds', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } },
+      {
+        res: {
+          text: '',
+          content: '',
+          tool_calls: [{ type: 'function', function: { name: 'missing', arguments: '{}' }, id: 'c1' }],
+        },
+      },
+    ]);
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      toolMode: 'native',
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    await engine.sendMessage('loop');
+    // prefill + 5 loop rounds
+    expect((provider.complete as ReturnType<typeof vi.fn>).mock.calls.length).toBe(6);
+  });
+
+  it('exposes stop() for simulated timeout handling', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } },
+      { res: { text: 'delayed', content: 'delayed', tool_calls: [] } },
+    ]);
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    await engine.stop();
+    expect(provider.stopCompletion).toHaveBeenCalledTimes(1);
+  });
+
   it('native tool mode continues when tool validation fails', async () => {
     const tool = defineToolZod({
       name: 'mul',
@@ -329,5 +383,48 @@ describe('LocalFirstEngine', () => {
     expect(meta.summary).toBe('');
     expect(meta.messages).toEqual([]);
     expect(meta.logicalTurnCount).toBe(0);
+  });
+
+  it('falls back to fresh seed when loading session fails (multimodal-safe)', async () => {
+    const provider = mockProvider([{ res: { text: '', content: '', tool_calls: [] } }]);
+    (provider.loadSession as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('session incompatible')
+    );
+    const files = new Map<string, string>([
+      ['tmp/mm.bin', 'binary-session'],
+      [
+        'tmp/mm.bin.meta.json',
+        JSON.stringify({
+          version: SESSION_META_VERSION,
+          seedHash: 'same-seed',
+          summary: 'old',
+          messages: [{ id: 'u1', role: 'user', content: '', mediaParts: [{ type: 'image', uri: 'file:///a.jpg' }] }],
+          logicalTurnCount: 1,
+        }),
+      ],
+    ]);
+    const storage: SessionStorageAdapter = {
+      async readText(path: string) {
+        return files.has(path) ? files.get(path)! : null;
+      },
+      async writeText(path: string, data: string) {
+        files.set(path, data);
+      },
+      async exists(path: string) {
+        return files.has(path);
+      },
+      async delete(path: string) {
+        files.delete(path);
+      },
+    };
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      session: { path: 'tmp/mm.bin', storage },
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    expect(provider.complete).toHaveBeenCalledTimes(1);
+    expect(engine.getMessages()).toEqual([]);
   });
 });

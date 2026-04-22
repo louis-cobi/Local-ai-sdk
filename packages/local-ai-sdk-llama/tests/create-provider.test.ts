@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createLlamaRNProvider } from '../src/create-provider.js';
+import { runProviderComplianceSuite } from '../../local-ai-sdk/src/testing/provider-compliance.js';
 
 const mocks = vi.hoisted(() => ({
   completionMock: vi.fn(),
@@ -219,4 +220,10 @@ describe('createLlamaRNProvider', () => {
     expect(info).toEqual({ model: 'meta' });
     expect(mocks.loadLlamaModelInfoMock).toHaveBeenCalledWith('file:///model.gguf');
   });
+});
+
+runProviderComplianceSuite('llama.rn', async () => {
+  const provider = createLlamaRNProvider({ modelPath: 'file:///model.gguf' });
+  await provider.init();
+  return provider;
 });

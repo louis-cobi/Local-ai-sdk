@@ -23,6 +23,7 @@ Initializes provider and session state.
 
 - Loads compatible existing session/meta when available.
 - Otherwise pre-fills immutable seed and optionally persists session files.
+- If binary session load fails (for example incompatible multimodal/runtime state), engine clears stale files and re-seeds automatically.
 
 ### `dispose(): Promise<void>`
 
@@ -37,7 +38,8 @@ Persists session binary + metadata when `session` is configured. No-op otherwise
 Loads binary session from `session.path` and restores metadata if seed hash is compatible.
 
 - **Throws**
-  - Error if `session.path` is not configured.
+  - `EngineError('E_SESSION_NOT_CONFIGURED')` if `session.path` is not configured.
+  - `EngineError('E_SESSION_UNSUPPORTED')` if provider has no session capability.
 
 ### `reset(opts?: ResetOptions): Promise<void>`
 
@@ -69,6 +71,9 @@ Runs one user turn end-to-end.
   - Persists metadata/session based on autosave policy
 - **Returns**
   - Final assistant text
+- **Throws**
+  - `EngineError('E_NOT_INITIALIZED')` if `init()` was not called
+  - `EngineError('E_INVALID_INPUT')` when both text and media are empty
 
 ### `generateText(userInput: string | SendMessageInput): Promise<string>`
 

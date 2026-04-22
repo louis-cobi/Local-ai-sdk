@@ -212,36 +212,48 @@ export type ParallelAPI = {
   subscribeToStatus(callback: (status: ParallelStatus) => void): Promise<{ remove: () => void }>;
 };
 
-/**
- * Narrow provider surface used by the engine (mock-friendly).
- */
-export type LLMProvider = {
+export type BaseLLMProvider = {
   init(): Promise<void>;
   dispose(): Promise<void>;
   complete(
     req: CompletionRequest,
     onToken?: (chunk: TokenChunk) => void
   ): Promise<CompletionResult>;
+  stopCompletion(): Promise<void>;
+};
+
+export type SessionProviderCapability = {
   saveSession(path: string): Promise<void>;
   loadSession(path: string): Promise<void>;
-  stopCompletion(): Promise<void>;
-  embed(text: string): Promise<number[]>;
+};
 
+export type EmbeddingProviderCapability = {
+  embed(text: string): Promise<number[]>;
+};
+
+export type RuntimeProviderCapability = {
   tokenize(text: string, opts?: { media_paths?: string[] }): Promise<{ tokens: number[] }>;
   detokenize(tokens: number[]): Promise<string>;
   rerank(query: string, documents: string[], params?: RerankParams): Promise<RerankResult[]>;
   bench(pp: number, tg: number, pl: number, nr: number): Promise<BenchResult>;
   clearCache(clearData?: boolean): Promise<void>;
+  loadModelInfo(modelPath?: string): Promise<Record<string, unknown>>;
+};
 
+export type MultimodalProviderCapability = {
   initMultimodal(opts: MultimodalInitOptions): Promise<boolean>;
   isMultimodalEnabled(): Promise<boolean>;
   getMultimodalSupport(): Promise<{ vision: boolean; audio: boolean }>;
   releaseMultimodal(): Promise<void>;
+};
 
+export type LoraProviderCapability = {
   applyLoraAdapters(loraList: LoraAdapter[]): Promise<void>;
   removeLoraAdapters(): Promise<void>;
   getLoadedLoraAdapters(): Promise<LoraAdapter[]>;
+};
 
+export type VocoderProviderCapability = {
   initVocoder(opts: VocoderInitOptions): Promise<boolean>;
   isVocoderEnabled(): Promise<boolean>;
   getFormattedAudioCompletion(
@@ -251,7 +263,33 @@ export type LLMProvider = {
   getAudioCompletionGuideTokens(textToSpeak: string): Promise<number[]>;
   decodeAudioTokens(tokens: number[]): Promise<number[]>;
   releaseVocoder(): Promise<void>;
-  loadModelInfo(modelPath?: string): Promise<Record<string, unknown>>;
+};
 
+export type ParallelProviderCapability = {
   parallel: ParallelAPI;
+};
+
+export type SpeechSynthesizer = {
+  speak(text: string): Promise<number[]>;
+};
+
+export type SpeechProviderCapability = {
+  speech: SpeechSynthesizer;
+};
+
+/**
+ * Capability-based provider surface.
+ * Engine only requires BaseLLMProvider; extra runtime APIs are optional.
+ */
+export type LLMProvider = BaseLLMProvider &
+  Partial<
+    SessionProviderCapability &
+      EmbeddingProviderCapability &
+      RuntimeProviderCapability &
+      MultimodalProviderCapability &
+      LoraProviderCapability &
+      VocoderProviderCapability &
+      ParallelProviderCapability &
+      SpeechProviderCapability
+  >;
 };

@@ -1,6 +1,7 @@
 import type { ContextParams, LlamaContext, TokenData } from 'llama.rn';
 import { initLlama, loadLlamaModelInfo } from 'llama.rn';
 import type { CompletionRequest, CompletionResult, LLMProvider, TokenChunk } from 'local-ai-sdk';
+import { createSpeechSynthesizer } from './speech.js';
 
 type BenchResult = {
   nKvMax: number;
@@ -462,5 +463,8 @@ export function createLlamaRNProvider(options: LlamaRNProviderOptions): LlamaRNP
       return (await loadLlamaModelInfo(modelPath ?? options.modelPath)) as Record<string, unknown>;
     },
     parallel: parallelApi,
+    get speech() {
+      return createSpeechSynthesizer(requireCtx());
+    },
   };
 }

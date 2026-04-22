@@ -11,6 +11,8 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "test": "vitest run",
+    "test:perf": "vitest run packages/local-ai-sdk/tests/perf-guardrails.test.ts",
+    "test:ci": "npm run test && npm run test:perf",
     "test:watch": "vitest",
     "test:packaging": "tsc -p tsconfig.packaging.json --noEmit",
     "test:smoke:exports": "node ./tests/packaging/smoke-exports.mjs && node ./tests/packaging/smoke-exports.cjs"

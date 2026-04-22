@@ -1,33 +1,46 @@
 # Provider Contracts
 
-## `LLMProvider`
+## `BaseLLMProvider`
 
-`LocalFirstEngine` depends on this interface:
+`LocalFirstEngine` now requires a minimal core provider contract:
 
 ```ts
-type LLMProvider = {
+type BaseLLMProvider = {
   init(): Promise<void>
   dispose(): Promise<void>
   complete(req: CompletionRequest, onToken?: (chunk: TokenChunk) => void): Promise<CompletionResult>
+  stopCompletion(): Promise<void>
+}
+```
+
+## `LLMProvider` (capability-based)
+
+Optional capabilities are attached on top of `BaseLLMProvider`:
+
+```ts
+type LLMProvider = BaseLLMProvider & Partial<{
+  // session capability
   saveSession(path: string): Promise<void>
   loadSession(path: string): Promise<void>
-  stopCompletion(): Promise<void>
+  // embedding capability
   embed(text: string): Promise<number[]>
+  // runtime helpers
   tokenize(text: string, opts?: { media_paths?: string[] }): Promise<{ tokens: number[] }>
   detokenize(tokens: number[]): Promise<string>
   rerank(query: string, documents: string[], params?: RerankParams): Promise<RerankResult[]>
   bench(pp: number, tg: number, pl: number, nr: number): Promise<BenchResult>
   clearCache(clearData?: boolean): Promise<void>
-
+  loadModelInfo(modelPath?: string): Promise<Record<string, unknown>>
+  // multimodal capability
   initMultimodal(opts: MultimodalInitOptions): Promise<boolean>
   isMultimodalEnabled(): Promise<boolean>
   getMultimodalSupport(): Promise<{ vision: boolean; audio: boolean }>
   releaseMultimodal(): Promise<void>
-
+  // LoRA capability
   applyLoraAdapters(loraList: LoraAdapter[]): Promise<void>
   removeLoraAdapters(): Promise<void>
   getLoadedLoraAdapters(): Promise<LoraAdapter[]>
-
+  // vocoder capability
   initVocoder(opts: VocoderInitOptions): Promise<boolean>
   isVocoderEnabled(): Promise<boolean>
   getFormattedAudioCompletion(
@@ -37,10 +50,11 @@ type LLMProvider = {
   getAudioCompletionGuideTokens(textToSpeak: string): Promise<number[]>
   decodeAudioTokens(tokens: number[]): Promise<number[]>
   releaseVocoder(): Promise<void>
-
-  loadModelInfo(modelPath?: string): Promise<Record<string, unknown>>
+  // parallel capability
   parallel: ParallelAPI
-}
+  // speech capability
+  speech: { speak(text: string): Promise<number[]> }
+}>
 ```
 
 ## Request and response types

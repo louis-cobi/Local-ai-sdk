@@ -131,7 +131,9 @@ await downloadModelWithAdapter(
 
 ## Session metadata (React Native)
 
-Binary KV lives at `session.path`. Chat UI state is JSON at `${session.path}.meta.json` by default. Pass `session.storage` with read/write/delete/exists backed by your FS module (Expo, RNFS, etc.). Node tests can omit it when `fs` is available.
+Binary KV lives at `session.path`. Chat UI state is JSON at `${session.path}.meta.json` by default. Pass `session.storage` with read/write/delete/exists backed by your FS module (Expo, RNFS, etc.). If available, implement `writeTextAtomic(path, data)` for crash-safe metadata writes.
+
+For durable RAG on React Native, set `memory.durableStore` with backend `op-sqlite` or `expo-vector-search`.
 
 ## TypeScript
 

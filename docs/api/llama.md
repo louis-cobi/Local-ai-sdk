@@ -29,7 +29,7 @@ Creates a provider backed by `llama.rn` `initLlama`.
 
 ### Return value
 
-Returns an object implementing `LLMProvider`:
+Returns a capability-rich provider (`BaseLLMProvider` + optional capabilities):
 
 - `init` initializes context and optional multimodal projector
 - `dispose` releases multimodal state and context
@@ -40,6 +40,7 @@ Returns an object implementing `LLMProvider`:
 - multimodal lifecycle + inspection (`initMultimodal`, `isMultimodalEnabled`, `getMultimodalSupport`, `releaseMultimodal`)
 - LoRA runtime controls (`applyLoraAdapters`, `removeLoraAdapters`, `getLoadedLoraAdapters`)
 - vocoder/audio APIs (`initVocoder`, `isVocoderEnabled`, `getFormattedAudioCompletion`, `getAudioCompletionGuideTokens`, `decodeAudioTokens`, `releaseVocoder`)
+- speech capability (`provider.speech.speak(text)`)
 - parallel queue APIs through `provider.parallel.*`
 - `loadModelInfo(modelPath?)` bridge to `loadLlamaModelInfo`
 

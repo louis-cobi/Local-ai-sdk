@@ -62,6 +62,8 @@ type SessionAutoSave = boolean | 'everyTurn' | number
 - `summaryThreshold?: number` (default 20 logical turns)
 - `maxMemoryChars?: number` (default 4000)
 - `ragTopK?: number` (default 5)
+- `vectorStore?: VectorStore` (custom store injection)
+- `durableStore?: { kind: 'rn'; backend: 'op-sqlite' | 'expo-vector-search'; namespace?: string }`
 
 ### `EngineConfig`
 
@@ -112,6 +114,7 @@ Tool error behavior:
 
 - `readText(path: string): Promise<string | null>`
 - `writeText(path: string, data: string): Promise<void>`
+- `writeTextAtomic?(path: string, data: string): Promise<void>`
 - `exists(path: string): Promise<boolean>`
 - `delete(path: string): Promise<void>`
 

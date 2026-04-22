@@ -1,6 +1,7 @@
 import type { ToolDefinition } from './tools/define-tool.js';
 import type { SessionStorageAdapter } from './core/session-storage.js';
 import type { CompletionAdvancedParams } from './providers/types.js';
+import type { VectorStore } from './memory/store.js';
 
 /** Chat role aligned with common chat templates. */
 export type ChatRole = 'user' | 'assistant' | 'system' | 'tool';
@@ -58,6 +59,14 @@ export type MemoryOptions = {
   maxMemoryChars?: number;
   /** Max results to pull from the vector store on recall (default 5). */
   ragTopK?: number;
+  /** Optional custom vector store implementation. */
+  vectorStore?: VectorStore;
+  /** Optional durable vector-store configuration (RN-first). */
+  durableStore?: {
+    kind: 'rn';
+    backend: 'op-sqlite' | 'expo-vector-search';
+    namespace?: string;
+  };
 };
 
 export type MemoryRecord = {

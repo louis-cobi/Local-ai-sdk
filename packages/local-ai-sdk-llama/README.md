@@ -39,10 +39,8 @@ Pass `mmprojPath` for vision/audio models. `ctx_shift` defaults to `false` when 
 
 `createSpeechSynthesizer` now uses llama vocoder methods when available (`initVocoder`, audio guide tokens, token decoding). It throws clear runtime errors when the current build does not expose vocoder support.
 
-## Breaking migration notes
+## Provider model
 
-- `LLMProvider` is no longer a minimal interface; all runtime APIs are now part of the contract.
-- `embed` is now required on `LLMProvider`.
-- If you maintain a custom provider, implement the new methods or wrap your provider with compatibility shims.
+`LLMProvider` is capability-based in `local-ai-sdk`: this adapter exposes a wide capability set (session, embedding, runtime helpers, multimodal, LoRA, vocoder, parallel, speech) on top of the base contract.
 
 Full signatures and option details are in [docs/api/llama.md](../../docs/api/llama.md).
