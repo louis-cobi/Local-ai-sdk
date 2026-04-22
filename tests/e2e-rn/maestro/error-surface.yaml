@@ -1,0 +1,10 @@
+appId: com.localaisdk.e2e
+---
+- tapOn:
+    id: e2e-input
+- inputText: ""
+- tapOn:
+    id: e2e-send
+- assertVisible:
+    id: e2e-error-banner
+

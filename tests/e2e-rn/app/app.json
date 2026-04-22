@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Local AI SDK E2E",
+    "slug": "local-ai-sdk-e2e",
+    "scheme": "localaisdke2e",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.localaisdk.e2e"
+    },
+    "android": {
+      "package": "com.localaisdk.e2e"
+    },
+    "plugins": [
+      [
+        "llama.rn",
+        {
+          "enableEntitlements": true,
+          "entitlementsProfile": "production",
+          "forceCxx20": true,
+          "enableOpenCL": true
+        }
+      ]
+    ]
+  }
+}
+
