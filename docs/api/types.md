@@ -37,6 +37,11 @@ type UserMediaPart =
 type ToolMode = 'native' | 'json'
 ```
 
+Mode semantics:
+
+- `native`: provider emits `NativeToolCall[]` via `CompletionResult.tool_calls`.
+- `json`: provider emits text JSON (`{"tool_call":{"name","args"}}`), then engine normalizes it into assistant `tool_calls` + `role: tool` result messages.
+
 ### `SessionAutoSave`
 
 ```ts
@@ -69,6 +74,10 @@ type SessionAutoSave = boolean | 'everyTurn' | number
 - `temperature?: number`
 - `stop?: string[]`
 - `seedExtras?: string[]`
+
+Tool error behavior:
+
+- For both `native` and `json`, tool execution errors are converted to structured `role: tool` payloads (`{ ok: false, error: string }`) and the turn continues.
 
 ### `ResetOptions`
 

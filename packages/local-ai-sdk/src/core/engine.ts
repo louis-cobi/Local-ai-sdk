@@ -61,6 +61,13 @@ function messageLineForSummary(m: ChatMessage): string {
   return base;
 }
 
+function toolErrorPayload(error: unknown): { ok: false; error: string } {
+  if (error instanceof Error) {
+    return { ok: false, error: error.message };
+  }
+  return { ok: false, error: String(error) };
+}
+
 export class LocalFirstEngine {
   private readonly provider: LLMProvider;
   private readonly registry: ToolRegistry;
@@ -354,7 +361,12 @@ export class LocalFirstEngine {
         });
 
         for (const tc of res.tool_calls) {
-          const raw = await this.registry.run(tc.function.name, tc.function.arguments);
+          let raw: unknown;
+          try {
+            raw = await this.registry.run(tc.function.name, tc.function.arguments);
+          } catch (error: unknown) {
+            raw = toolErrorPayload(error);
+          }
           next.push({
             role: 'tool',
             tool_call_id: tc.id ?? `call_${tc.function.name}`,
@@ -369,12 +381,32 @@ export class LocalFirstEngine {
       if (this.toolMode === 'json') {
         const parsed = tryParseJsonToolCall(res.content || res.text);
         if (parsed) {
-          const raw = await this.registry.run(parsed.name, JSON.stringify(parsed.args));
+          let raw: unknown;
+          try {
+            raw = await this.registry.run(parsed.name, JSON.stringify(parsed.args));
+          } catch (error: unknown) {
+            raw = toolErrorPayload(error);
+          }
+          const toolCallId = `json_${parsed.name}_${round}`;
           const next = [...msgs];
-          next.push({ role: 'assistant', content: res.content || res.text });
           next.push({
-            role: 'user',
-            content: `Tool ${parsed.name} returned: ${JSON.stringify(raw)}`,
+            role: 'assistant',
+            content: res.content || res.text,
+            tool_calls: [
+              {
+                type: 'function',
+                function: {
+                  name: parsed.name,
+                  arguments: JSON.stringify(parsed.args),
+                },
+                id: toolCallId,
+              },
+            ],
+          });
+          next.push({
+            role: 'tool',
+            tool_call_id: toolCallId,
+            content: JSON.stringify(raw),
           });
           msgs = next;
           includeTools = false;

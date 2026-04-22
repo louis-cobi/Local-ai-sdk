@@ -10,8 +10,8 @@ This site documents the **V0.0.0 baseline** of `local-ai-sdk`, using the current
   - optional KV session persistence
   - JSON metadata persistence (summary + message window)
 - Supports **tool calling** with two modes:
-  - `native` tool calls (`llama.rn` OpenAI-style tool schema)
-  - `json` fallback tool calls (`{"tool_call": ...}`)
+  - `native` tool calls (`CompletionResult.tool_calls: NativeToolCall[]`)
+  - `json` fallback tool calls (`{"tool_call": ...}`), normalized into the same assistant `tool_calls` + `role: tool` result flow
 - Supports optional memory/RAG primitives:
   - `embed`
   - `remember`

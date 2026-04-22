@@ -63,6 +63,7 @@ Runs one user turn end-to-end.
   - Validates non-empty text and/or media
   - Builds context messages
   - Executes completion + tool loop
+  - In both `native` and `json` tool modes, tool failures are converted into structured `role: tool` error payloads (`{ ok: false, error: string }`) so the turn can continue
   - Appends assistant response
   - Applies summarization policy
   - Persists metadata/session based on autosave policy

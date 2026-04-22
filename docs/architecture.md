@@ -44,11 +44,18 @@ flowchart TD
 
 - `native`
   - Sends tool schemas through `tools` + `tool_choice: auto`.
-  - Executes returned `tool_calls`.
-  - Appends `tool` role responses and continues until final assistant text.
+  - Provider returns `assistant` messages with `tool_calls` (native function-calling contract).
+  - Engine executes each call locally, then appends `tool` role responses with `tool_call_id`.
+  - If a tool fails (invalid args, unknown tool, runtime error), the engine appends a structured tool error payload instead of aborting the whole turn.
 - `json`
   - Expects assistant JSON shaped like `{"tool_call":{"name","args"}}`.
-  - Executes tool locally, injects result as follow-up message, and reruns generation.
+  - Engine synthesizes an `assistant` tool-call message, then injects a `tool` role response (same role semantics as native mode), and reruns generation.
+  - If a tool fails, the engine injects a structured tool error payload and continues generation.
+
+## Tool call vocabulary
+
+- **Native tool call**: an `assistant` message carrying `tool_calls` from provider output.
+- **Tool result message**: a `role: tool` message carrying the JSON-serialized result for one call (success or error), linked with `tool_call_id`.
 
 ## Persistence model
 

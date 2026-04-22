@@ -33,6 +33,23 @@ type LLMProvider = {
 - `content: string`
 - `tool_calls: NativeToolCall[]`
 
+`tool_calls` represents **native tool calls emitted by the provider** (assistant intent to call tools), not tool execution outputs.
+
+### `NativeToolCall`
+
+```ts
+type NativeToolCall = {
+  type: 'function'
+  function: {
+    name: string
+    arguments: string // JSON string
+  }
+  id?: string
+}
+```
+
+This type models provider-originated tool requests only.
+
 ### `TokenChunk`
 
 - `token: string`
@@ -46,6 +63,26 @@ type LLMProvider = {
 - `tool_calls?: unknown`
 - `tool_call_id?: string`
 - `name?: string`
+
+Usage notes:
+
+- `tool_calls` is present on `assistant` messages when using native function-calling.
+- `tool_call_id` is present on `role: tool` messages to link a tool result to a specific call.
+- Tool outputs (including structured errors) must be sent through `role: tool` messages, not as `role: user`.
+- In `json` mode, the engine synthesizes an assistant `tool_calls` entry before appending the `role: tool` result, so downstream role semantics stay aligned with native mode.
+
+### Tool result payloads (`role: tool`)
+
+Tool result messages always carry JSON-serialized content:
+
+- Success example: `{"temp":22,"unit":"c"}`
+- Error example: `{"ok":false,"error":"Invalid arguments for tool mul: b: Expected number, received string"}`
+
+Error payload shape is stable:
+
+```ts
+{ ok: false; error: string }
+```
 
 ### `LlamaMessageContentPart`
 

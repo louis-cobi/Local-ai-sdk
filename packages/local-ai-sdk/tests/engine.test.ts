@@ -73,6 +73,14 @@ describe('LocalFirstEngine', () => {
     await engine.init();
     const out = await engine.sendMessage('compute');
     expect(out).toBe('3');
+
+    const completeCalls = (provider.complete as ReturnType<typeof vi.fn>).mock.calls;
+    const secondReq = completeCalls[2]?.[0] as CompletionRequest;
+    const assistantToolCallMsg = secondReq.messages.find((m) => m.role === 'assistant' && m.tool_calls);
+    const toolResultMsg = secondReq.messages.find((m) => m.role === 'tool');
+
+    expect(assistantToolCallMsg).toBeDefined();
+    expect(toolResultMsg?.content).toBe('3');
   });
 
   it('remember/recall uses embeddings when available', async () => {
@@ -84,7 +92,39 @@ describe('LocalFirstEngine', () => {
     expect(recall.hits.length).toBeGreaterThan(0);
   });
 
-  it('defineToolZod validates tool arguments', async () => {
+  it('continues JSON tool mode when tool execution fails', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } }, // prefill
+      {
+        res: {
+          text: '{"tool_call":{"name":"missing_tool","args":{"x":1}}}',
+          content: '{"tool_call":{"name":"missing_tool","args":{"x":1}}}',
+          tool_calls: [],
+        },
+      },
+      { res: { text: 'handled', content: 'handled', tool_calls: [] } },
+    ]);
+
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      toolMode: 'json',
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    const out = await engine.sendMessage('run');
+    expect(out).toBe('handled');
+
+    const completeCalls = (provider.complete as ReturnType<typeof vi.fn>).mock.calls;
+    const secondReq = completeCalls[2]?.[0] as CompletionRequest;
+    const toolResultMsg = secondReq.messages.find((m) => m.role === 'tool');
+
+    expect(toolResultMsg).toBeDefined();
+    expect(String(toolResultMsg?.content)).toContain('"ok":false');
+    expect(String(toolResultMsg?.content)).toContain('Unknown tool');
+  });
+
+  it('native tool mode continues when tool validation fails', async () => {
     const tool = defineToolZod({
       name: 'mul',
       description: 'multiply',
@@ -107,6 +147,7 @@ describe('LocalFirstEngine', () => {
           ],
         },
       },
+      { res: { text: 'recovered', content: 'recovered', tool_calls: [] } },
     ]);
 
     const engine = createEngine({
@@ -117,6 +158,15 @@ describe('LocalFirstEngine', () => {
       memory: { windowSize: 4, summaryThreshold: 1000 },
     });
     await engine.init();
-    await expect(engine.sendMessage('run')).rejects.toThrow(/Invalid arguments/);
+    const out = await engine.sendMessage('run');
+    expect(out).toBe('recovered');
+
+    const completeCalls = (provider.complete as ReturnType<typeof vi.fn>).mock.calls;
+    const secondReq = completeCalls[2]?.[0] as CompletionRequest;
+    const toolResultMsg = secondReq.messages.find((m) => m.role === 'tool');
+
+    expect(toolResultMsg).toBeDefined();
+    expect(String(toolResultMsg?.content)).toContain('"ok":false');
+    expect(String(toolResultMsg?.content)).toContain('Invalid arguments');
   });
 });
