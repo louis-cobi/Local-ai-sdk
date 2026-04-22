@@ -1,0 +1,16 @@
+appId: com.localaisdk.e2e
+---
+- assertVisible:
+    id: e2e-model-ready
+- tapOn:
+    id: e2e-input
+- inputText: "Remember this image context."
+- tapOn:
+    id: e2e-send
+- tapOn:
+    id: e2e-session-save
+- tapOn:
+    id: e2e-session-load
+- assertVisible:
+    id: e2e-assistant-last
+

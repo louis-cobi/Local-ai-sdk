@@ -61,8 +61,11 @@ export type MemoryOptions = {
   ragTopK?: number;
   /** Optional custom vector store implementation. */
   vectorStore?: VectorStore;
-  /** Optional durable vector-store configuration (RN-first). */
-  durableStore?: {
+  /**
+   * Optional RN vector backend bootstrap configuration.
+   * Current behavior: runtime backend check + in-memory fallback.
+   */
+  rnVectorBackend?: {
     kind: 'rn';
     backend: 'op-sqlite' | 'expo-vector-search';
     namespace?: string;

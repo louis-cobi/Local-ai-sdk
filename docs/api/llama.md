@@ -4,6 +4,11 @@
 
 Creates a provider backed by `llama.rn` `initLlama`.
 
+Runtime matrix for this adapter:
+- `llama.rn >= 0.10.0`
+- `react-native >= 0.79.0`
+- `expo >= 53.0.0` (recommended)
+
 ### Parameters: `LlamaRNProviderOptions`
 
 - `modelPath: string` (required)
@@ -43,6 +48,7 @@ Returns a capability-rich provider (`BaseLLMProvider` + optional capabilities):
 - speech capability (`provider.speech.speak(text)`)
 - parallel queue APIs through `provider.parallel.*`
 - `loadModelInfo(modelPath?)` bridge to `loadLlamaModelInfo`
+- `capabilities` descriptor for explicit runtime capability checks
 
 ## Completion passthrough details
 

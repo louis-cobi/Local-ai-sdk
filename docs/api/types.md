@@ -63,7 +63,8 @@ type SessionAutoSave = boolean | 'everyTurn' | number
 - `maxMemoryChars?: number` (default 4000)
 - `ragTopK?: number` (default 5)
 - `vectorStore?: VectorStore` (custom store injection)
-- `durableStore?: { kind: 'rn'; backend: 'op-sqlite' | 'expo-vector-search'; namespace?: string }`
+- `rnVectorBackend?: { kind: 'rn'; backend: 'op-sqlite' | 'expo-vector-search'; namespace?: string }`
+  - current behavior: runtime backend availability check + in-memory vector fallback
 
 ### `EngineConfig`
 

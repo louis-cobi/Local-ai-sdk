@@ -149,6 +149,8 @@ describe('createLlamaRNProvider', () => {
 
   it('forwards advanced completion params', async () => {
     const provider = createLlamaRNProvider({ modelPath: 'file:///model.gguf' });
+    expect(provider.capabilities?.parallel).toBe(true);
+    expect(provider.capabilities?.multimodal).toBe(true);
     await provider.init();
     await provider.complete({
       messages: [{ role: 'user', content: 'hi' }],

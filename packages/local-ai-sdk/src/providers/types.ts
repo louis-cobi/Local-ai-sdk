@@ -277,6 +277,17 @@ export type SpeechProviderCapability = {
   speech: SpeechSynthesizer;
 };
 
+export type ProviderCapabilities = {
+  session?: boolean;
+  embedding?: boolean;
+  runtime?: boolean;
+  multimodal?: boolean;
+  lora?: boolean;
+  vocoder?: boolean;
+  parallel?: boolean;
+  speech?: boolean;
+};
+
 /**
  * Capability-based provider surface.
  * Engine only requires BaseLLMProvider; extra runtime APIs are optional.
@@ -291,5 +302,7 @@ export type LLMProvider = BaseLLMProvider &
       VocoderProviderCapability &
       ParallelProviderCapability &
       SpeechProviderCapability
-  >;
+  > & {
+    capabilities?: ProviderCapabilities;
+  };
 };

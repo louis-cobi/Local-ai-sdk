@@ -2,6 +2,11 @@
 
 [`llama.rn`](https://github.com/mybigday/llama.rn) adapter implementing `LLMProvider` from [`local-ai-sdk`](../local-ai-sdk).
 
+Target runtime matrix:
+- `llama.rn >= 0.10.0`
+- `react-native >= 0.79.0`
+- `expo >= 53.0.0` (recommended)
+
 ## Usage
 
 Prefer importing from **`local-ai-sdk`** (it re-exports this package). Standalone:

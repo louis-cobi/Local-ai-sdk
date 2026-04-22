@@ -36,6 +36,7 @@ export type {
   ParallelProviderCapability,
   SpeechProviderCapability,
   SpeechSynthesizer,
+  ProviderCapabilities,
   CompletionAdvancedParams,
   CompletionRequest,
   CompletionResult,
@@ -58,7 +59,7 @@ export type {
 } from './providers/types.js';
 export { useLocalChat, type UseLocalChatResult } from './react/use-local-chat.js';
 export { InMemoryVectorStore, type VectorStore } from './memory/store.js';
-export { RnDurableVectorStore, createVectorStore } from './memory/rn-durable-store.js';
+export { RnVectorBackendStore, createVectorStore } from './memory/rn-vector-backend-store.js';
 export { formatMemoryBlock } from './memory/rag.js';
 export { tryParseJsonToolCall } from './core/tool-json.js';
 export { summarizeTranscript } from './core/summarizer.js';

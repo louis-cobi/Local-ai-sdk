@@ -1,18 +1,18 @@
 import type { MemoryOptions, MemoryRecord, VectorSearchHit } from '../types.js';
 import { InMemoryVectorStore, type VectorStore } from './store.js';
 
-type DurableConfig = NonNullable<MemoryOptions['durableStore']>;
+type RnBackendConfig = NonNullable<MemoryOptions['rnVectorBackend']>;
 
 /**
- * RN durable vector-store adapter with graceful fallback.
- * If runtime dependencies are unavailable, it uses in-memory storage.
+ * RN vector backend bootstrap with graceful in-memory fallback.
+ * Current implementation checks backend availability and uses in-memory vectors.
  */
-export class RnDurableVectorStore implements VectorStore {
+export class RnVectorBackendStore implements VectorStore {
   private readonly fallback = new InMemoryVectorStore();
   private backendReady = false;
   private bootPromise: Promise<void> | null = null;
 
-  constructor(private readonly config: DurableConfig) {}
+  constructor(private readonly config: RnBackendConfig) {}
 
   private async ensureBootstrapped(): Promise<void> {
     if (this.backendReady) return;
@@ -51,8 +51,8 @@ export class RnDurableVectorStore implements VectorStore {
 
 export function createVectorStore(memory?: MemoryOptions): VectorStore {
   if (memory?.vectorStore) return memory.vectorStore;
-  if (memory?.durableStore?.kind === 'rn') {
-    return new RnDurableVectorStore(memory.durableStore);
+  if (memory?.rnVectorBackend?.kind === 'rn') {
+    return new RnVectorBackendStore(memory.rnVectorBackend);
   }
   return new InMemoryVectorStore();
 }

@@ -7,7 +7,7 @@ import { summarizeTranscript } from './summarizer.js';
 import { tryParseJsonToolCall } from './tool-json.js';
 import { formatMemoryBlock } from '../memory/rag.js';
 import type { VectorStore } from '../memory/store.js';
-import { createVectorStore } from '../memory/rn-durable-store.js';
+import { createVectorStore } from '../memory/rn-vector-backend-store.js';
 import type {
   ChatMessageInput,
   EmbeddingProviderCapability,
@@ -89,10 +89,14 @@ function toolErrorPayload(error: unknown): { ok: false; error: string } {
 }
 
 function hasSessionCapability(provider: LLMProvider): provider is LLMProvider & SessionProviderCapability {
+  if (provider.capabilities && provider.capabilities.session === false) return false;
+  if (provider.capabilities && provider.capabilities.session === true) return true;
   return typeof provider.saveSession === 'function' && typeof provider.loadSession === 'function';
 }
 
 function hasEmbeddingCapability(provider: LLMProvider): provider is LLMProvider & EmbeddingProviderCapability {
+  if (provider.capabilities && provider.capabilities.embedding === false) return false;
+  if (provider.capabilities && provider.capabilities.embedding === true) return true;
   return typeof provider.embed === 'function';
 }
 

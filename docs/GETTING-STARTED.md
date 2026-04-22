@@ -10,6 +10,11 @@ npm install local-ai-sdk llama.rn react
 
 Peers: **`llama.rn`** (native runtime; required for `createLlamaRNProvider`), optional **`react`** (only if you use `useLocalChat`).
 
+Recommended runtime matrix:
+- `expo >= 53`
+- `react-native >= 0.79`
+- `llama.rn >= 0.10.0`
+
 ```ts
 import {
   createEngine,
@@ -133,7 +138,8 @@ await downloadModelWithAdapter(
 
 Binary KV lives at `session.path`. Chat UI state is JSON at `${session.path}.meta.json` by default. Pass `session.storage` with read/write/delete/exists backed by your FS module (Expo, RNFS, etc.). If available, implement `writeTextAtomic(path, data)` for crash-safe metadata writes.
 
-For durable RAG on React Native, set `memory.durableStore` with backend `op-sqlite` or `expo-vector-search`.
+For RN vector backend bootstrap, set `memory.rnVectorBackend` with backend `op-sqlite` or `expo-vector-search`.
+Current behavior is explicit: backend availability check at runtime, then in-memory vector fallback.
 
 ## TypeScript
 

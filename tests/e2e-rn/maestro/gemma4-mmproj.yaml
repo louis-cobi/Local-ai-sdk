@@ -1,0 +1,14 @@
+appId: com.localaisdk.e2e
+---
+- assertVisible:
+    id: e2e-model-ready
+- assertVisible:
+    id: e2e-mmproj-ready
+- tapOn:
+    id: e2e-input
+- inputText: "Describe this image in one sentence."
+- tapOn:
+    id: e2e-send
+- assertVisible:
+    id: e2e-assistant-last
+

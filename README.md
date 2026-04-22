@@ -79,13 +79,15 @@ For RN/Expo large-file downloads, see adapter-based options in [docs/GETTING-STA
 | Surface | Supported | Notes |
 | ------- | --------- | ----- |
 | Node.js | `>=18` | Packaging validation runs in `NodeNext` mode in CI. |
-| React Native | Active support | Use adapter-based downloads (`expo-file-system` or `react-native-blob-util`). |
-| llama.rn | `>=0.5.0` | Peer dependency for runtime provider usage. |
+| Expo | `>=53` | New Architecture is expected in this target matrix. |
+| React Native | `>=0.79` | Use adapter-based downloads (`expo-file-system` or `react-native-blob-util`). |
+| llama.rn | `>=0.10.0` | New Architecture required by llama.rn from v0.10+. |
 | Zod | `v4` | `defineToolZod` uses `z.toJSONSchema` from Zod v4. |
 
 ## Provider contract
 
 - `LLMProvider` is capability-based: minimal core (`init`, `dispose`, `complete`, `stopCompletion`) + optional capabilities (`session`, `embedding`, `multimodal`, `vocoder`, `parallel`, `speech`).
+- Optional `provider.capabilities` descriptor can advertise capability availability explicitly.
 - `CompletionRequest` supports advanced inference controls (`top_k`, `top_p`, penalties, `grammar`, `response_format`, thinking controls, template kwargs, and related options).
 - `TokenChunk` carries optional structured fields (`content`, `reasoning_content`, `tool_calls`, `accumulated_text`, `requestId`).
 

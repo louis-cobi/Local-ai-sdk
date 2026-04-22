@@ -290,6 +290,16 @@ export function createLlamaRNProvider(options: LlamaRNProviderOptions): LlamaRNP
   };
 
   return {
+    capabilities: {
+      session: true,
+      embedding: true,
+      runtime: true,
+      multimodal: true,
+      lora: true,
+      vocoder: true,
+      parallel: true,
+      speech: true,
+    },
     async init() {
       if (ctx) return;
       ctx = await initLlama(params, options.onProgress);

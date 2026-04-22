@@ -54,8 +54,21 @@ type LLMProvider = BaseLLMProvider & Partial<{
   parallel: ParallelAPI
   // speech capability
   speech: { speak(text: string): Promise<number[]> }
+  // runtime capability descriptor
+  capabilities: {
+    session?: boolean
+    embedding?: boolean
+    runtime?: boolean
+    multimodal?: boolean
+    lora?: boolean
+    vocoder?: boolean
+    parallel?: boolean
+    speech?: boolean
+  }
 }>
 ```
+
+`capabilities` is optional but recommended. The engine uses it first and only falls back to method probing when absent.
 
 ## Request and response types
 
