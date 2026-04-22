@@ -1,0 +1,15 @@
+appId: com.localaisdk.e2e
+---
+- assertVisible:
+    id: e2e-model-ready
+- tapOn:
+    id: e2e-memory-upsert
+- tapOn:
+    id: e2e-restart-marker
+- stopApp
+- launchApp
+- tapOn:
+    id: e2e-memory-query
+- assertVisible:
+    id: e2e-assistant-last
+

@@ -5,6 +5,7 @@
 export type SessionStorageAdapter = {
   readText(path: string): Promise<string | null>;
   writeText(path: string, data: string): Promise<void>;
+  writeTextAtomic?(path: string, data: string): Promise<void>;
   exists(path: string): Promise<boolean>;
   delete(path: string): Promise<void>;
 };
@@ -26,6 +27,18 @@ export async function createNodeSessionStorageAdapter(): Promise<SessionStorageA
       async writeText(path: string, data: string) {
         await fs.mkdir(pathMod.dirname(path), { recursive: true });
         await fs.writeFile(path, data, 'utf8');
+      },
+      async writeTextAtomic(path: string, data: string) {
+        const tmpPath = `${path}.tmp`;
+        await fs.mkdir(pathMod.dirname(path), { recursive: true });
+        await fs.writeFile(tmpPath, data, 'utf8');
+        try {
+          await fs.rename(tmpPath, path);
+        } catch {
+          // Some filesystems can fail atomic rename; preserve data with a direct write fallback.
+          await fs.writeFile(path, data, 'utf8');
+          await fs.unlink(tmpPath).catch(() => {});
+        }
       },
       async exists(path: string) {
         try {

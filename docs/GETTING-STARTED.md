@@ -10,6 +10,11 @@ npm install local-ai-sdk llama.rn react
 
 Peers: **`llama.rn`** (native runtime; required for `createLlamaRNProvider`), optional **`react`** (only if you use `useLocalChat`).
 
+Recommended runtime matrix:
+- `expo >= 53`
+- `react-native >= 0.79`
+- `llama.rn >= 0.10.0`
+
 ```ts
 import {
   createEngine,
@@ -59,6 +64,29 @@ await engine.init();
 await engine.sendMessage('Hello');
 ```
 
+## Per-turn completion control
+
+`sendMessage` accepts completion overrides for llama sampling/format controls:
+
+```ts
+await engine.sendMessage({
+  text: 'Return a compact JSON object.',
+  completion: {
+    n_predict: 200,
+    temperature: 0.2,
+    top_p: 0.9,
+    response_format: {
+      type: 'json_object',
+      schema: {
+        type: 'object',
+        properties: { answer: { type: 'string' } },
+        required: ['answer'],
+      },
+    },
+  },
+});
+```
+
 ## Main API surface (`local-ai-sdk`)
 
 | Export | Purpose |
@@ -70,6 +98,8 @@ await engine.sendMessage('Hello');
 | `buildTurnMessages` | Low-level turn assembly |
 | `useLocalChat` | React hook |
 | `remember` / `recall` / `embed` | When the provider exposes `embed()` |
+
+The llama provider also exposes advanced runtime APIs (`tokenize`, `detokenize`, `parallel`, multimodal status, LoRA, vocoder, model info).
 
 ## Multimodal user input
 
@@ -106,7 +136,10 @@ await downloadModelWithAdapter(
 
 ## Session metadata (React Native)
 
-Binary KV lives at `session.path`. Chat UI state is JSON at `${session.path}.meta.json` by default. Pass `session.storage` with read/write/delete/exists backed by your FS module (Expo, RNFS, etc.). Node tests can omit it when `fs` is available.
+Binary KV lives at `session.path`. Chat UI state is JSON at `${session.path}.meta.json` by default. Pass `session.storage` with read/write/delete/exists backed by your FS module (Expo, RNFS, etc.). If available, implement `writeTextAtomic(path, data)` for crash-safe metadata writes.
+
+For RN vector backend bootstrap, set `memory.rnVectorBackend` with backend `op-sqlite` or `expo-vector-search`.
+Current behavior is explicit: backend availability check at runtime, then in-memory vector fallback.
 
 ## TypeScript
 

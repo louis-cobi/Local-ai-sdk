@@ -1,5 +1,7 @@
 import type { ToolDefinition } from './tools/define-tool.js';
 import type { SessionStorageAdapter } from './core/session-storage.js';
+import type { CompletionAdvancedParams } from './providers/types.js';
+import type { VectorStore } from './memory/store.js';
 
 /** Chat role aligned with common chat templates. */
 export type ChatRole = 'user' | 'assistant' | 'system' | 'tool';
@@ -24,6 +26,7 @@ export type ChatMessage = {
 export type SendMessageInput = {
   text: string;
   mediaParts?: UserMediaPart[];
+  completion?: CompletionAdvancedParams;
 };
 
 export type ToolMode = 'native' | 'json';
@@ -56,6 +59,17 @@ export type MemoryOptions = {
   maxMemoryChars?: number;
   /** Max results to pull from the vector store on recall (default 5). */
   ragTopK?: number;
+  /** Optional custom vector store implementation. */
+  vectorStore?: VectorStore;
+  /**
+   * Optional RN vector backend bootstrap configuration.
+   * Current behavior: runtime backend check + in-memory fallback.
+   */
+  rnVectorBackend?: {
+    kind: 'rn';
+    backend: 'op-sqlite' | 'expo-vector-search';
+    namespace?: string;
+  };
 };
 
 export type MemoryRecord = {
@@ -86,6 +100,8 @@ export type EngineConfig = {
   temperature?: number;
   /** Optional stop sequences passed to the provider. */
   stop?: string[];
+  /** Default completion controls applied on each turn. */
+  completionDefaults?: CompletionAdvancedParams;
   /**
    * Extra strings included in the seed fingerprint (e.g. model path, `n_ctx`)
    * to invalidate incompatible session files.

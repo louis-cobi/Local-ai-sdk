@@ -28,6 +28,7 @@ This document captures the shipped architecture and the planned evolution of the
 
 - **Monorepo**: `local-ai-sdk-models` (Hugging Face download/cache), `local-ai-sdk-llama` (llama.rn provider with optional `mmproj`), and **`local-ai-sdk`** as the **default consumer package** — it depends on the other two and re-exports their APIs. Optional: install subpackages alone for edge cases.
 - **Zod tools**: `defineToolZod` + validation in `ToolRegistry` before `execute`.
+- **Capability-based provider contract**: minimal base provider + optional capabilities for session, embeddings, multimodal, vocoder, parallel, and speech.
 - **Multimodal user turns**: `sendMessage({ text, mediaParts })` with `file://` URIs; metadata stores URIs only (no base64 blobs).
 - **Model downloads**: `downloadModel` / `getModelPathIfCached` / `huggingFaceResolveUrl` in `local-ai-sdk-models`.
   - Node path now uses streaming I/O, retry/backoff, optional `AbortSignal`, optional SHA-256 checks, and `.part` atomic writes.
@@ -46,6 +47,7 @@ This document captures the shipped architecture and the planned evolution of the
 - **Context shifting**: `local-ai-sdk-llama` defaults `ctx_shift` to `false` when `mmprojPath` is set (multimodal); otherwise `true` as a safety net.
 - **Multimodal session files** may be limited upstream; validate `saveSession` / `loadSession` with your `llama.rn` build.
 - **`reset({ keepSeed: false })`** is not supported without creating a fresh llama context/provider.
+- **Session metadata writes** are expected to use atomic writes (`*.tmp` + rename) to prevent crash-corrupted meta files.
 
 ## Repository conventions
 

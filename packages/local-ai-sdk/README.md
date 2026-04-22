@@ -13,10 +13,14 @@ This package **depends on** and **re-exports**:
 
 So a normal app installs **`local-ai-sdk`** + peer **`llama.rn`** (and optional **`react`** for `useLocalChat`). You do not need three separate imports unless you maintain a custom `LLMProvider` and want to omit the Llama adapter.
 
+Provider contracts are capability-based: base runtime is minimal, advanced features are optional capabilities.
+
 ## Peers
 
-- **`llama.rn`** (optional in `package.json` for pure-JS / mock tests; required at runtime for `createLlamaRNProvider`)
-- **`react`** (optional; only for `useLocalChat`)
+- **`llama.rn >= 0.10.0`** (required at runtime for `createLlamaRNProvider`)
+- **`react-native >= 0.79.0`**
+- **`expo >= 53.0.0`** (recommended target runtime for this package matrix)
+- **`react >= 19.0.0`** (optional; only for `useLocalChat`)
 
 ## Docs
 

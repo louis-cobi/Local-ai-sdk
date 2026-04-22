@@ -1,0 +1,13 @@
+appId: com.localaisdk.e2e
+---
+- tapOn:
+    id: e2e-download-model
+- tapOn:
+    id: e2e-download-mmproj
+- assertVisible:
+    id: e2e-model-ready
+- assertVisible:
+    id: e2e-mmproj-ready
+- assertVisible:
+    id: e2e-cache-hit
+

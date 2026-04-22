@@ -28,6 +28,7 @@ type UserMediaPart =
 
 - `text: string`
 - `mediaParts?: UserMediaPart[]`
+- `completion?: CompletionAdvancedParams`
 
 ## Configuration types
 
@@ -61,6 +62,9 @@ type SessionAutoSave = boolean | 'everyTurn' | number
 - `summaryThreshold?: number` (default 20 logical turns)
 - `maxMemoryChars?: number` (default 4000)
 - `ragTopK?: number` (default 5)
+- `vectorStore?: VectorStore` (custom store injection)
+- `rnVectorBackend?: { kind: 'rn'; backend: 'op-sqlite' | 'expo-vector-search'; namespace?: string }`
+  - current behavior: runtime backend availability check + in-memory vector fallback
 
 ### `EngineConfig`
 
@@ -73,6 +77,7 @@ type SessionAutoSave = boolean | 'everyTurn' | number
 - `maxPredict?: number`
 - `temperature?: number`
 - `stop?: string[]`
+- `completionDefaults?: CompletionAdvancedParams`
 - `seedExtras?: string[]`
 
 Tool error behavior:
@@ -110,6 +115,7 @@ Tool error behavior:
 
 - `readText(path: string): Promise<string | null>`
 - `writeText(path: string, data: string): Promise<void>`
+- `writeTextAtomic?(path: string, data: string): Promise<void>`
 - `exists(path: string): Promise<boolean>`
 - `delete(path: string): Promise<void>`
 

@@ -6,8 +6,15 @@ import { createNodeSessionStorageAdapter, type SessionStorageAdapter } from './s
 import { summarizeTranscript } from './summarizer.js';
 import { tryParseJsonToolCall } from './tool-json.js';
 import { formatMemoryBlock } from '../memory/rag.js';
-import { InMemoryVectorStore, type VectorStore } from '../memory/store.js';
-import type { ChatMessageInput, LLMProvider } from '../providers/types.js';
+import type { VectorStore } from '../memory/store.js';
+import { createVectorStore } from '../memory/rn-vector-backend-store.js';
+import type {
+  ChatMessageInput,
+  EmbeddingProviderCapability,
+  LLMProvider,
+  SessionProviderCapability,
+} from '../providers/types.js';
+import { EngineError } from './errors.js';
 import type {
   ChatMessage,
   EngineConfig,
@@ -43,6 +50,13 @@ function normalizeUserInput(input: string | SendMessageInput): SendMessageInput 
   return typeof input === 'string' ? { text: input } : input;
 }
 
+function mergeCompletionParams(
+  defaults: Record<string, unknown> | undefined,
+  overrides: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  return { ...(defaults ?? {}), ...(overrides ?? {}) };
+}
+
 function ragQueryFromUserMessage(msg: ChatMessage): string {
   const base = msg.content.trim();
   if (msg.mediaParts?.length) {
@@ -62,10 +76,28 @@ function messageLineForSummary(m: ChatMessage): string {
 }
 
 function toolErrorPayload(error: unknown): { ok: false; error: string } {
+  if (error instanceof EngineError && error.code === 'E_TOOL_UNKNOWN') {
+    return { ok: false, error: error.message };
+  }
+  if (error instanceof EngineError && error.code === 'E_TOOL_ARGS') {
+    return { ok: false, error: error.message };
+  }
   if (error instanceof Error) {
     return { ok: false, error: error.message };
   }
   return { ok: false, error: String(error) };
+}
+
+function hasSessionCapability(provider: LLMProvider): provider is LLMProvider & SessionProviderCapability {
+  if (provider.capabilities && provider.capabilities.session === false) return false;
+  if (provider.capabilities && provider.capabilities.session === true) return true;
+  return typeof provider.saveSession === 'function' && typeof provider.loadSession === 'function';
+}
+
+function hasEmbeddingCapability(provider: LLMProvider): provider is LLMProvider & EmbeddingProviderCapability {
+  if (provider.capabilities && provider.capabilities.embedding === false) return false;
+  if (provider.capabilities && provider.capabilities.embedding === true) return true;
+  return typeof provider.embed === 'function';
 }
 
 export class LocalFirstEngine {
@@ -89,7 +121,7 @@ export class LocalFirstEngine {
     this.registry = new ToolRegistry(config.tools ?? []);
     this.toolsOpenAI = this.registry.toOpenAIStyleTools();
     this.toolMode = config.toolMode ?? (this.toolsOpenAI.length > 0 ? 'native' : 'json');
-    this.vectorStore = new InMemoryVectorStore();
+    this.vectorStore = createVectorStore(config.memory);
   }
 
   subscribe(listener: () => void): () => void {
@@ -192,17 +224,29 @@ export class LocalFirstEngine {
       messages: this.messages,
       logicalTurnCount: this.logicalTurnCount,
     };
-    await storage.writeText(mp, JSON.stringify(meta));
+    const data = JSON.stringify(meta);
+    if (typeof storage.writeTextAtomic === 'function') {
+      await storage.writeTextAtomic(mp, data);
+      return;
+    }
+    await storage.writeText(mp, data);
   }
 
   private async persistAll(): Promise<void> {
     if (!this.config.session) return;
+    if (!hasSessionCapability(this.provider)) {
+      throw new EngineError(
+        'E_SESSION_UNSUPPORTED',
+        'This provider does not support save/load session capability.'
+      );
+    }
     await this.provider.saveSession(this.config.session.path);
     await this.writeMeta();
   }
 
   private async prefillSeed(): Promise<void> {
     const system = this.buildSeedSystemPrompt();
+    const completionDefaults = this.config.completionDefaults;
     await this.provider.complete({
       messages: [{ role: 'system', content: system }],
       n_predict: 0,
@@ -211,6 +255,7 @@ export class LocalFirstEngine {
       tools: this.toolMode === 'native' && this.toolsOpenAI.length ? this.toolsOpenAI : undefined,
       tool_choice:
         this.toolMode === 'native' && this.toolsOpenAI.length ? ('none' as string) : undefined,
+      ...(completionDefaults ?? {}),
     });
   }
 
@@ -226,7 +271,24 @@ export class LocalFirstEngine {
       const meta = await this.readMeta();
       const hasBin = await this.storage.exists(session.path);
       if (meta && meta.version === SESSION_META_VERSION && meta.seedHash === this.seedHash && hasBin) {
-        await this.provider.loadSession(session.path);
+        if (!hasSessionCapability(this.provider)) {
+          throw new EngineError(
+            'E_SESSION_UNSUPPORTED',
+            'session.path is configured but provider has no session capability.'
+          );
+        }
+        try {
+          await this.provider.loadSession(session.path);
+        } catch {
+          // Session binary/meta can be invalid across runtime or multimodal changes; reset cleanly.
+          await this.storage.delete(session.path);
+          await this.storage.delete(mp);
+          await this.prefillSeed();
+          await this.persistAll();
+          this.initialized = true;
+          this.notify();
+          return;
+        }
         this.summary = meta.summary ?? '';
         this.messages = (meta.messages ?? []).map((m) => ({ ...m }));
         this.logicalTurnCount = meta.logicalTurnCount ?? 0;
@@ -259,7 +321,15 @@ export class LocalFirstEngine {
   }
 
   async load(): Promise<void> {
-    if (!this.config.session) throw new Error('session.path is not configured');
+    if (!this.config.session) {
+      throw new EngineError('E_SESSION_NOT_CONFIGURED', 'session.path is not configured');
+    }
+    if (!hasSessionCapability(this.provider)) {
+      throw new EngineError(
+        'E_SESSION_UNSUPPORTED',
+        'This provider does not support save/load session capability.'
+      );
+    }
     await this.provider.loadSession(this.config.session.path);
     const meta = await this.readMeta();
     if (meta && meta.seedHash === this.seedHash) {
@@ -284,7 +354,8 @@ export class LocalFirstEngine {
     }
 
     if (!keepSeed) {
-      throw new Error(
+      throw new EngineError(
+        'E_INVALID_INPUT',
         'reset({ keepSeed: false }) requires re-initializing the llama context; release and create a new provider.'
       );
     }
@@ -327,21 +398,31 @@ export class LocalFirstEngine {
 
   private async runToolLoop(
     initialMessages: ChatMessageInput[],
+    completionOverrides: Record<string, unknown> | undefined,
     onToken?: (t: string) => void
   ): Promise<{ text: string; messages: ChatMessageInput[] }> {
     let msgs = initialMessages;
     let lastText = '';
     let includeTools = this.toolMode === 'native' && this.toolsOpenAI.length > 0;
 
+    const mergedCompletion = mergeCompletionParams(
+      this.config.completionDefaults as Record<string, unknown> | undefined,
+      completionOverrides
+    );
+    const { n_predict, temperature, stop, tools, tool_choice, ...advancedCompletion } =
+      mergedCompletion as Record<string, unknown>;
+
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       const res = await this.provider.complete(
         {
+          ...(advancedCompletion as object),
           messages: msgs,
-          n_predict: this.config.maxPredict ?? 256,
-          temperature: this.config.temperature ?? 0.7,
-          stop: this.config.stop,
-          tools: includeTools ? this.toolsOpenAI : undefined,
-          tool_choice: includeTools ? 'auto' : undefined,
+          n_predict: typeof n_predict === 'number' ? n_predict : (this.config.maxPredict ?? 256),
+          temperature:
+            typeof temperature === 'number' ? temperature : (this.config.temperature ?? 0.7),
+          stop: Array.isArray(stop) ? (stop as string[]) : this.config.stop,
+          tools: includeTools ? this.toolsOpenAI : ((tools as typeof this.toolsOpenAI) ?? undefined),
+          tool_choice: includeTools ? 'auto' : ((tool_choice as string) ?? undefined),
         },
         onToken
           ? (chunk) => {
@@ -365,7 +446,13 @@ export class LocalFirstEngine {
           try {
             raw = await this.registry.run(tc.function.name, tc.function.arguments);
           } catch (error: unknown) {
-            raw = toolErrorPayload(error);
+            if (error instanceof Error && error.message.includes('Unknown tool')) {
+              raw = toolErrorPayload(new EngineError('E_TOOL_UNKNOWN', error.message, error));
+            } else if (error instanceof Error && error.message.includes('Invalid arguments')) {
+              raw = toolErrorPayload(new EngineError('E_TOOL_ARGS', error.message, error));
+            } else {
+              raw = toolErrorPayload(error);
+            }
           }
           next.push({
             role: 'tool',
@@ -385,7 +472,13 @@ export class LocalFirstEngine {
           try {
             raw = await this.registry.run(parsed.name, JSON.stringify(parsed.args));
           } catch (error: unknown) {
-            raw = toolErrorPayload(error);
+            if (error instanceof Error && error.message.includes('Unknown tool')) {
+              raw = toolErrorPayload(new EngineError('E_TOOL_UNKNOWN', error.message, error));
+            } else if (error instanceof Error && error.message.includes('Invalid arguments')) {
+              raw = toolErrorPayload(new EngineError('E_TOOL_ARGS', error.message, error));
+            } else {
+              raw = toolErrorPayload(error);
+            }
           }
           const toolCallId = `json_${parsed.name}_${round}`;
           const next = [...msgs];
@@ -423,15 +516,18 @@ export class LocalFirstEngine {
   private async buildMemoryBlock(userMsg: ChatMessage): Promise<string> {
     const maxChars = this.config.memory?.maxMemoryChars ?? 4000;
     const k = this.config.memory?.ragTopK ?? 5;
-    if (!this.provider.embed) return '';
+    if (!hasEmbeddingCapability(this.provider)) return '';
     const q = await this.provider.embed(ragQueryFromUserMessage(userMsg));
     const hits = await this.vectorStore.search(q, k);
     return formatMemoryBlock(hits, maxChars);
   }
 
   async remember(record: MemoryRecord): Promise<string> {
-    if (!this.provider.embed) {
-      throw new Error('remember() requires an embedding-capable provider (enable embedding in llama.rn).');
+    if (!hasEmbeddingCapability(this.provider)) {
+      throw new EngineError(
+        'E_EMBEDDING_UNSUPPORTED',
+        'remember() requires an embedding-capable provider (enable embedding in llama.rn).'
+      );
     }
     const id = record.id ?? newId();
     const vec = await this.provider.embed(record.content);
@@ -440,8 +536,11 @@ export class LocalFirstEngine {
   }
 
   async recall(query: string): Promise<RecallResult> {
-    if (!this.provider.embed) {
-      throw new Error('recall() requires an embedding-capable provider (enable embedding in llama.rn).');
+    if (!hasEmbeddingCapability(this.provider)) {
+      throw new EngineError(
+        'E_EMBEDDING_UNSUPPORTED',
+        'recall() requires an embedding-capable provider (enable embedding in llama.rn).'
+      );
     }
     const k = this.config.memory?.ragTopK ?? 5;
     const maxChars = this.config.memory?.maxMemoryChars ?? 4000;
@@ -451,8 +550,11 @@ export class LocalFirstEngine {
   }
 
   async embed(text: string): Promise<number[]> {
-    if (!this.provider.embed) {
-      throw new Error('embed() requires an embedding-capable provider (enable embedding in llama.rn).');
+    if (!hasEmbeddingCapability(this.provider)) {
+      throw new EngineError(
+        'E_EMBEDDING_UNSUPPORTED',
+        'embed() requires an embedding-capable provider (enable embedding in llama.rn).'
+      );
     }
     return this.provider.embed(text);
   }
@@ -461,13 +563,16 @@ export class LocalFirstEngine {
    * Run one user turn. Pass a string or `{ text, mediaParts }` for multimodal input.
    */
   async sendMessage(userInput: string | SendMessageInput, onToken?: (chunk: string) => void): Promise<string> {
-    if (!this.initialized) throw new Error('Engine not initialized. Call init() first.');
+    if (!this.initialized) {
+      throw new EngineError('E_NOT_INITIALIZED', 'Engine not initialized. Call init() first.');
+    }
 
     const normalized = normalizeUserInput(userInput);
     const text = normalized.text.trim();
     const mediaParts = normalized.mediaParts;
+    const completionOverrides = normalized.completion as Record<string, unknown> | undefined;
     if (text.length === 0 && (!mediaParts || mediaParts.length === 0)) {
-      throw new Error('sendMessage requires non-empty text and/or mediaParts.');
+      throw new EngineError('E_INVALID_INPUT', 'sendMessage requires non-empty text and/or mediaParts.');
     }
 
     const userMsg: ChatMessage = {
@@ -488,7 +593,7 @@ export class LocalFirstEngine {
       userMessage: userMsg,
     });
 
-    const { text: reply } = await this.runToolLoop(turnMessages, onToken);
+    const { text: reply } = await this.runToolLoop(turnMessages, completionOverrides, onToken);
 
     this.messages = [...this.messages, { id: newId(), role: 'assistant', content: reply }];
     this.logicalTurnCount += 1;

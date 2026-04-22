@@ -26,6 +26,58 @@ function mockProvider(script: Array<{ res: CompletionResult }>): LLMProvider {
     embed: vi.fn(async (text: string) => {
       return Array.from({ length: 8 }, (_, k) => (text.charCodeAt(0) + k) / 255);
     }),
+    tokenize: vi.fn(async () => ({ tokens: [] })),
+    detokenize: vi.fn(async () => ''),
+    rerank: vi.fn(async () => []),
+    bench: vi.fn(async () => ({
+      nKvMax: 0,
+      nBatch: 0,
+      nUBatch: 0,
+      flashAttn: 0,
+      isPpShared: 0,
+      nGpuLayers: 0,
+      nThreads: 0,
+      nThreadsBatch: 0,
+      pp: 0,
+      tg: 0,
+      pl: 0,
+      nKv: 0,
+      tPp: 0,
+      speedPp: 0,
+      tTg: 0,
+      speedTg: 0,
+      t: 0,
+      speed: 0,
+    })),
+    clearCache: vi.fn(async () => {}),
+    initMultimodal: vi.fn(async () => true),
+    isMultimodalEnabled: vi.fn(async () => false),
+    getMultimodalSupport: vi.fn(async () => ({ vision: false, audio: false })),
+    releaseMultimodal: vi.fn(async () => {}),
+    applyLoraAdapters: vi.fn(async () => {}),
+    removeLoraAdapters: vi.fn(async () => {}),
+    getLoadedLoraAdapters: vi.fn(async () => []),
+    initVocoder: vi.fn(async () => true),
+    isVocoderEnabled: vi.fn(async () => false),
+    getFormattedAudioCompletion: vi.fn(async () => ({ prompt: '' })),
+    getAudioCompletionGuideTokens: vi.fn(async () => []),
+    decodeAudioTokens: vi.fn(async () => []),
+    releaseVocoder: vi.fn(async () => {}),
+    loadModelInfo: vi.fn(async () => ({})),
+    parallel: {
+      completion: vi.fn(async () => ({
+        requestId: 1,
+        promise: Promise.resolve({ text: '', content: '', tool_calls: [] }),
+        stop: async () => {},
+      })),
+      embedding: vi.fn(async () => ({ requestId: 1, promise: Promise.resolve({ embedding: [] }) })),
+      rerank: vi.fn(async () => ({ requestId: 1, promise: Promise.resolve([]) })),
+      enable: vi.fn(async () => true),
+      disable: vi.fn(async () => true),
+      configure: vi.fn(async () => true),
+      getStatus: vi.fn(async () => ({ enabled: false, maxSlots: 0, queueLength: 0, activeRequests: [] })),
+      subscribeToStatus: vi.fn(async () => ({ remove: () => {} })),
+    },
   };
 }
 
@@ -126,6 +178,60 @@ describe('LocalFirstEngine', () => {
     expect(String(toolResultMsg?.content)).toContain('Unknown tool');
   });
 
+  it('handles malformed JSON tool payload as plain assistant text', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } },
+      { res: { text: '{"tool_call":', content: '{"tool_call":', tool_calls: [] } },
+    ]);
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      toolMode: 'json',
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    const out = await engine.sendMessage('run');
+    expect(out).toBe('{"tool_call":');
+  });
+
+  it('caps native tool loop to max rounds', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } },
+      {
+        res: {
+          text: '',
+          content: '',
+          tool_calls: [{ type: 'function', function: { name: 'missing', arguments: '{}' }, id: 'c1' }],
+        },
+      },
+    ]);
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      toolMode: 'native',
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    await engine.sendMessage('loop');
+    // prefill + 5 loop rounds
+    expect((provider.complete as ReturnType<typeof vi.fn>).mock.calls.length).toBe(6);
+  });
+
+  it('exposes stop() for simulated timeout handling', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } },
+      { res: { text: 'delayed', content: 'delayed', tool_calls: [] } },
+    ]);
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    await engine.stop();
+    expect(provider.stopCompletion).toHaveBeenCalledTimes(1);
+  });
+
   it('native tool mode continues when tool validation fails', async () => {
     const tool = defineToolZod({
       name: 'mul',
@@ -196,6 +302,32 @@ describe('LocalFirstEngine', () => {
     expect(provider.saveSession).toHaveBeenCalledTimes(2);
   });
 
+  it('applies per-turn completion overrides', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } },
+      { res: { text: 'ok', content: 'ok', tool_calls: [] } },
+    ]);
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      maxPredict: 64,
+      temperature: 0.7,
+      completionDefaults: { top_p: 0.9 },
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    await engine.sendMessage({
+      text: 'hello',
+      completion: { n_predict: 12, temperature: 0.2, top_k: 20 },
+    });
+    const completeCalls = (provider.complete as ReturnType<typeof vi.fn>).mock.calls;
+    const req = completeCalls[1]?.[0] as CompletionRequest;
+    expect(req.n_predict).toBe(12);
+    expect(req.temperature).toBe(0.2);
+    expect(req.top_p).toBe(0.9);
+    expect(req.top_k).toBe(20);
+  });
+
   it('purges incompatible session artifacts and reseeds on init', async () => {
     const provider = mockProvider([{ res: { text: '', content: '', tool_calls: [] } }]);
     const files = new Map<string, string>([
@@ -251,5 +383,48 @@ describe('LocalFirstEngine', () => {
     expect(meta.summary).toBe('');
     expect(meta.messages).toEqual([]);
     expect(meta.logicalTurnCount).toBe(0);
+  });
+
+  it('falls back to fresh seed when loading session fails (multimodal-safe)', async () => {
+    const provider = mockProvider([{ res: { text: '', content: '', tool_calls: [] } }]);
+    (provider.loadSession as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('session incompatible')
+    );
+    const files = new Map<string, string>([
+      ['tmp/mm.bin', 'binary-session'],
+      [
+        'tmp/mm.bin.meta.json',
+        JSON.stringify({
+          version: SESSION_META_VERSION,
+          seedHash: 'same-seed',
+          summary: 'old',
+          messages: [{ id: 'u1', role: 'user', content: '', mediaParts: [{ type: 'image', uri: 'file:///a.jpg' }] }],
+          logicalTurnCount: 1,
+        }),
+      ],
+    ]);
+    const storage: SessionStorageAdapter = {
+      async readText(path: string) {
+        return files.has(path) ? files.get(path)! : null;
+      },
+      async writeText(path: string, data: string) {
+        files.set(path, data);
+      },
+      async exists(path: string) {
+        return files.has(path);
+      },
+      async delete(path: string) {
+        files.delete(path);
+      },
+    };
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      session: { path: 'tmp/mm.bin', storage },
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    expect(provider.complete).toHaveBeenCalledTimes(1);
+    expect(engine.getMessages()).toEqual([]);
   });
 });
