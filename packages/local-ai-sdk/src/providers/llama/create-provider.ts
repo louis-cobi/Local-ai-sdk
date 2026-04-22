@@ -9,6 +9,17 @@ import type {
 } from '../types.js';
 import { createSpeechSynthesizer } from './speech.js';
 
+function isSdkDebugEnabled(): boolean {
+  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
+  const raw = env.LOCAL_AI_SDK_DEBUG ?? env.EXPO_PUBLIC_LOCAL_AI_SDK_DEBUG ?? '';
+  return ['1', 'true', 'yes', 'on', 'debug'].includes(raw.toLowerCase());
+}
+
+function sdkDebug(scope: string, message: string): void {
+  if (!isSdkDebugEnabled()) return;
+  console.log(`[local-ai-sdk][${scope}] ${message}`);
+}
+
 type BenchResult = {
   nKvMax: number;
   nBatch: number;
@@ -169,6 +180,8 @@ export type LlamaRNProviderOptions = {
   /** Forward any extra llama.rn ContextParams. */
   extra?: Partial<ContextParams>;
   onProgress?: (progress: number) => void;
+  /** Force provider debug logs regardless of env. */
+  debug?: boolean;
 };
 
 function mapTokenChunk(data: TokenData): TokenChunk {
@@ -224,6 +237,11 @@ function normalizeParallelStatus(raw: unknown): ParallelStatus {
  */
 export function createLlamaRNProvider(options: LlamaRNProviderOptions): LlamaRNProvider {
   let ctx: LlamaContext | null = null;
+  const debugEnabled = options.debug === true || isSdkDebugEnabled();
+  const debug = (message: string): void => {
+    if (!debugEnabled) return;
+    console.log(`[local-ai-sdk][llama-provider] ${message}`);
+  };
   const multimodal = Boolean(options.mmprojPath);
   const ctxShiftDefault = options.ctx_shift ?? !multimodal;
 
@@ -328,16 +346,26 @@ export function createLlamaRNProvider(options: LlamaRNProviderOptions): LlamaRNP
     },
     async init() {
       if (ctx) return;
+      debug(
+        `initLlama start model=${options.modelPath} ctx=${options.contextSize ?? 'default'} gpu_layers=${
+          options.n_gpu_layers ?? 'default'
+        } embedding=${options.embedding ?? false}`
+      );
       ctx = await initLlama(params, options.onProgress);
+      debug('initLlama completed');
       if (options.mmprojPath) {
         const c = ctx as LlamaContextMultimodal;
         if (typeof c.initMultimodal === 'function') {
+          debug(`initMultimodal start path=${options.mmprojPath} use_gpu=${options.mmprojUseGpu ?? true}`);
           await c.initMultimodal({
             path: options.mmprojPath,
             use_gpu: options.mmprojUseGpu ?? true,
             image_min_tokens: options.mmprojImageMinTokens,
             image_max_tokens: options.mmprojImageMaxTokens,
           });
+          debug('initMultimodal completed');
+        } else {
+          debug('initMultimodal unavailable in current llama.rn build');
         }
       }
     },

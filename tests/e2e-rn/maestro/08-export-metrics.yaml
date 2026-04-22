@@ -1,0 +1,11 @@
+appId: com.localaisdk.e2e
+---
+# Step 08: metrics export file creation.
+- launchApp
+- swipe:
+    start: 50%,85%
+    end: 50%,25%
+- tapOn:
+    id: e2e-export-metrics
+- assertVisible:
+    id: e2e-metrics-export-path

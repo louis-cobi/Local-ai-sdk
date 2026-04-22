@@ -1,0 +1,10 @@
+appId: com.localaisdk.e2e
+---
+# Step 01: cold state preconditions after app-data reset.
+- launchApp
+- assertVisible:
+    id: e2e-input
+- assertVisible:
+    id: e2e-model-missing
+- assertVisible:
+    id: e2e-mmproj-missing

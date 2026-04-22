@@ -1,16 +1,14 @@
 appId: com.localaisdk.e2e
 ---
+# Step 06: session save/load lifecycle.
+- launchApp
 - assertVisible:
-    id: e2e-model-ready
-- tapOn:
-    id: e2e-input
-- inputText: "Remember this image context."
-- tapOn:
-    id: e2e-send
+    id: e2e-engine-ready
 - tapOn:
     id: e2e-session-save
 - tapOn:
     id: e2e-session-load
 - assertVisible:
+    id: e2e-session-path
+- assertVisible:
     id: e2e-assistant-last
-

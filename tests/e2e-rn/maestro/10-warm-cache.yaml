@@ -1,0 +1,10 @@
+appId: com.localaisdk.e2e
+---
+# Step 10: warm cache check after first install.
+- launchApp
+- tapOn:
+    id: e2e-download-model
+- tapOn:
+    id: e2e-download-mmproj
+- assertVisible:
+    id: e2e-cache-hit

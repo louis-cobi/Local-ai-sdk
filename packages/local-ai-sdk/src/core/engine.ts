@@ -28,6 +28,17 @@ import type {
 
 const MAX_TOOL_ROUNDS = 5;
 
+function isSdkDebugEnabled(): boolean {
+  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
+  const raw = env.LOCAL_AI_SDK_DEBUG ?? env.EXPO_PUBLIC_LOCAL_AI_SDK_DEBUG ?? '';
+  return ['1', 'true', 'yes', 'on', 'debug'].includes(raw.toLowerCase());
+}
+
+function sdkDebug(scope: string, message: string): void {
+  if (!isSdkDebugEnabled()) return;
+  console.log(`[local-ai-sdk][${scope}] ${message}`);
+}
+
 function newId(): string {
   const c = globalThis.crypto;
   if (c && 'randomUUID' in c && typeof c.randomUUID === 'function') {
@@ -261,15 +272,22 @@ export class LocalFirstEngine {
 
   async init(): Promise<void> {
     if (this.initialized) return;
+    sdkDebug('engine', 'init start');
+    sdkDebug('engine', 'provider.init start');
     await this.provider.init();
+    sdkDebug('engine', 'provider.init completed');
     this.storage = await this.resolveStorage();
+    sdkDebug('engine', `storage resolved: ${this.storage ? 'yes' : 'no'}`);
     this.seedHash = this.computeSeedHash();
+    sdkDebug('engine', 'seed hash computed');
 
     const session = this.config.session;
     if (session && this.storage) {
+      sdkDebug('engine', `session mode enabled path=${session.path}`);
       const mp = this.metaPath()!;
       const meta = await this.readMeta();
       const hasBin = await this.storage.exists(session.path);
+      sdkDebug('engine', `session probe meta=${meta ? 'yes' : 'no'} hasBin=${hasBin}`);
       if (meta && meta.version === SESSION_META_VERSION && meta.seedHash === this.seedHash && hasBin) {
         if (!hasSessionCapability(this.provider)) {
           throw new EngineError(
@@ -278,15 +296,21 @@ export class LocalFirstEngine {
           );
         }
         try {
+          sdkDebug('engine', 'loading existing provider session');
           await this.provider.loadSession(session.path);
+          sdkDebug('engine', 'provider session loaded');
         } catch {
           // Session binary/meta can be invalid across runtime or multimodal changes; reset cleanly.
+          sdkDebug('engine', 'session load failed, resetting session artifacts');
           await this.storage.delete(session.path);
           await this.storage.delete(mp);
           await this.prefillSeed();
+          sdkDebug('engine', 'prefill after session reset completed');
           await this.persistAll();
+          sdkDebug('engine', 'persist after session reset completed');
           this.initialized = true;
           this.notify();
+          sdkDebug('engine', 'init done (session reset path)');
           return;
         }
         this.summary = meta.summary ?? '';
@@ -294,19 +318,26 @@ export class LocalFirstEngine {
         this.logicalTurnCount = meta.logicalTurnCount ?? 0;
         this.initialized = true;
         this.notify();
+        sdkDebug('engine', 'init done (session restore path)');
         return;
       }
       // Incompatible or missing session: start fresh files
+      sdkDebug('engine', 'session missing/incompatible, starting fresh');
       if (hasBin) await this.storage.delete(session.path);
       if (await this.storage.exists(mp)) await this.storage.delete(mp);
     }
 
+    sdkDebug('engine', 'prefill seed start');
     await this.prefillSeed();
+    sdkDebug('engine', 'prefill seed completed');
     if (session) {
+      sdkDebug('engine', 'persistAll start');
       await this.persistAll();
+      sdkDebug('engine', 'persistAll completed');
     }
     this.initialized = true;
     this.notify();
+    sdkDebug('engine', 'init done');
   }
 
   async dispose(): Promise<void> {

@@ -1,0 +1,20 @@
+appId: com.localaisdk.e2e
+---
+# Step 05: streaming path + stop button.
+- launchApp
+- assertVisible:
+    id: e2e-engine-ready
+- tapOn:
+    id: e2e-input
+- inputText: "Stream test: generate a few words."
+- swipe:
+    start: 50%,85%
+    end: 50%,30%
+- tapOn:
+    id: e2e-stream-start
+- assertVisible:
+    id: e2e-assistant-last
+- tapOn:
+    id: e2e-stop
+- assertVisible:
+    id: e2e-stream-metrics

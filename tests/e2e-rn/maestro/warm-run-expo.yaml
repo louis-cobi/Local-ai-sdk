@@ -1,0 +1,8 @@
+appId: com.localaisdk.e2e
+---
+# Warm run: cache + core runtime checks.
+- runFlow: 10-warm-cache.yaml
+- runFlow: 03-provider-capabilities.yaml
+- runFlow: 04-send-message.yaml
+- runFlow: 06-session.yaml
+- runFlow: 07-memory.yaml

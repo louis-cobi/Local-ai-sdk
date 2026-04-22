@@ -1,0 +1,8 @@
+appId: com.localaisdk.e2e
+---
+# Step 03: provider contract visibility once engine is ready.
+- launchApp
+- assertVisible:
+    id: e2e-engine-ready
+- assertVisible:
+    id: e2e-provider-capabilities

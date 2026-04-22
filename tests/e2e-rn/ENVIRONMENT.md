@@ -57,10 +57,27 @@ EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER=expo
 
 ## Suggested run order
 
-1. `download-model.yaml`
-2. `gemma4-mmproj.yaml`
-3. `chat-stream-stop.yaml`
-4. `session-multimodal-save-load.yaml`
-5. `provider-capabilities.yaml`
-6. `error-surface.yaml`
-7. `rag-restart.yaml`
+1. clear app data (`adb shell pm clear com.localaisdk.e2e`)
+2. `preflight.yaml`
+3. `01-cold-state.yaml`
+4. `02-download-install.yaml`
+5. `03-provider-capabilities.yaml`
+6. `04-send-message.yaml`
+7. `05-stream-stop.yaml`
+8. `06-session.yaml`
+9. `07-memory.yaml`
+10. `08-export-metrics.yaml`
+11. `09-error-surface.yaml`
+12. `10-warm-cache.yaml`
+13. clear app data again
+14. restart Metro with `EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER=blob`
+15. `first-run-blob.yaml`
+16. `full-pass.yaml`
+
+## Reset behavior
+
+Use app-data clear to simulate a first installation state:
+
+```bash
+adb shell pm clear com.localaisdk.e2e
+```

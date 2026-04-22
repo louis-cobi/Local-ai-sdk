@@ -1,10 +1,11 @@
 appId: com.localaisdk.e2e
 ---
-- tapOn:
-    id: e2e-input
-- inputText: ""
+# Step 09: deterministic error surface.
+- launchApp
+- swipe:
+    start: 50%,85%
+    end: 50%,30%
 - tapOn:
     id: e2e-send
 - assertVisible:
     id: e2e-error-banner
-

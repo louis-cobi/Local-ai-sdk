@@ -1,14 +1,9 @@
 appId: com.localaisdk.e2e
 ---
+# Step 02: install model + mmproj from missing state.
 - launchApp
-- assertVisible:
-    id: e2e-download-model
-- assertVisible:
-    id: e2e-download-mmproj
 - tapOn:
     id: e2e-download-model
-- assertVisible:
-    id: e2e-log-count
 - tapOn:
     id: e2e-download-mmproj
 - assertVisible:
@@ -16,5 +11,4 @@ appId: com.localaisdk.e2e
 - assertVisible:
     id: e2e-mmproj-ready
 - assertVisible:
-    id: e2e-cache-hit
-
+    id: e2e-engine-ready

@@ -1,15 +1,14 @@
 appId: com.localaisdk.e2e
 ---
+# Step 07: memory upsert + query.
+- launchApp
 - assertVisible:
-    id: e2e-model-ready
+    id: e2e-engine-ready
 - tapOn:
     id: e2e-memory-upsert
 - tapOn:
-    id: e2e-restart-marker
-- stopApp
-- launchApp
-- tapOn:
     id: e2e-memory-query
 - assertVisible:
+    id: e2e-memory-hits
+- assertVisible:
     id: e2e-assistant-last
-

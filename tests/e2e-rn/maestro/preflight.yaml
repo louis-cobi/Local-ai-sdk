@@ -1,19 +1,12 @@
 appId: com.localaisdk.e2e
 ---
-# Fast validation before heavier flows.
+# Step 00: app boots and key controls are visible.
 - launchApp
 - assertVisible:
-    id: e2e-restart-marker
-- assertVisible:
-    id: e2e-model-ready
-- assertVisible:
-    id: e2e-mmproj-ready
-- tapOn:
     id: e2e-input
-- inputText: "preflight ping"
-- tapOn:
-    id: e2e-send
 - assertVisible:
-    id: e2e-assistant-last
+    id: e2e-download-model
 - assertVisible:
-    id: e2e-log-count
+    id: e2e-download-mmproj
+- assertVisible:
+    id: e2e-download-adapter

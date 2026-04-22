@@ -1,29 +1,43 @@
-# React Native E2E (Expo + llama.rn + Gemma 4 E2B)
+# React Native Manual Test App (Expo + llama.rn + Gemma 4 E2B)
 
-This suite validates runtime behavior on real RN builds, not Vitest mocks.
+This app is the manual validation console for `local-ai-sdk` on real RN builds.
+Use it first as a user-facing sandbox, then automate stable paths with Maestro.
 
-Harness app is included at `tests/e2e-rn/app`.
+App location: `tests/e2e-rn/app`.
 
 ## Goal
 
-Validate the full vertical path in a real RN app:
+Offer a complete manual test surface for package consumers:
 
-- model download and file integrity
-- provider/context init (`llama.rn`)
-- SDK turn loop (send, stream, stop)
-- multimodal path (`mmproj`)
-- session save/load stability
-- backend bootstrap + memory fallback behavior
+- runtime configuration from UI (model/provider/chat settings)
+- model and mmproj download with progress and cache visibility
+- engine init/re-init with capability inspection
+- chat send/stream/stop and deterministic tool probing
+- memory/session workflows
+- metrics export and event log inspection
 
-## Scenarios
+## Manual testing domains
 
-- `gemma4-mmproj.yaml`: Gemma 4 E2B model + `mmproj` boot and multimodal prompt.
-- `session-multimodal-save-load.yaml`: save/load session behavior with multimodal turns.
-- `rag-restart.yaml`: RAG backend bootstrap + app restart continuity check.
-- `download-model.yaml`: model + `mmproj` download and cache hit verification.
-- `chat-stream-stop.yaml`: streaming path and user stop action.
-- `provider-capabilities.yaml`: runtime `provider.capabilities` contract visibility.
-- `error-surface.yaml`: malformed input / missing asset error path with stable UI signaling.
+- **Configuration**
+  - edit repo/file/path/provider settings at runtime
+  - load presets (`default`, `coldStart`, `warmCache`)
+  - apply and reset config without code edits
+
+- **Models and engine**
+  - download model/mmproj independently
+  - inspect download metrics (progress, bytes, duration)
+  - initialize/re-initialize engine and read provider capabilities
+
+- **Chat**
+  - send single-turn message
+  - stream response and stop generation
+  - monitor throughput counters
+
+- **Tools, memory, session, metrics**
+  - probe registered tools in-band
+  - remember/recall memory markers
+  - save/load/reset session file
+  - export JSON metrics snapshot
 
 ## Requirements
 
@@ -35,7 +49,7 @@ Validate the full vertical path in a real RN app:
 - real device strongly recommended (especially for Gemma 4 + multimodal)
 - see `tests/e2e-rn/ENVIRONMENT.md`
 
-## Required app test IDs
+## Required app test IDs (kept for future automation)
 
 The host app must expose these test IDs:
 
@@ -57,56 +71,52 @@ The host app must expose these test IDs:
 - `e2e-provider-capabilities`
 - `e2e-error-banner`
 
-## Run
+## Run the manual app
 
 ```bash
 npm install --prefix tests/e2e-rn/app
 npm run e2e:rn:app:android
-maestro test tests/e2e-rn/maestro/gemma4-mmproj.yaml
-maestro test tests/e2e-rn/maestro/session-multimodal-save-load.yaml
-maestro test tests/e2e-rn/maestro/rag-restart.yaml
-maestro test tests/e2e-rn/maestro/download-model.yaml
-maestro test tests/e2e-rn/maestro/preflight.yaml
-maestro test tests/e2e-rn/maestro/chat-stream-stop.yaml
-maestro test tests/e2e-rn/maestro/provider-capabilities.yaml
-maestro test tests/e2e-rn/maestro/error-surface.yaml
-maestro test tests/e2e-rn/maestro/full-pass.yaml
 ```
 
-## Where to see results
+## Suggested manual workflow order
 
-You have two result surfaces:
+Use this lifecycle to validate package behavior before adding automation:
 
-- **Visual console in app** (`tests/e2e-rn/app/App.tsx`)
-  - runtime status: model/mmproj ready, cache hit, engine ready
-  - model config: repo/file names
-  - prompt controls: system prompt + prefill text
-  - stream metrics: chunk count, char count, duration, avg chars/s
-  - download metrics: backend, progress, bytes, duration
-  - init/session/memory metrics: init duration, session path, memory recall hits
-  - tool path: dedicated `Tool probe` button + last tool result
-  - metrics export: `Export metrics` button writes JSON in app storage
-  - errors: stable banner (`e2e-error-banner`)
-  - live event log with timestamps
-- **CLI logs**
-  - Expo/Metro logs in the terminal running `npm run e2e:rn:app:android`
-  - Maestro scenario logs in the terminal running `maestro test ...`
+1. apply `coldStart` preset and run "Run cold step"
+2. download model and mmproj
+3. initialize engine
+4. run send + stream + stop in Chat
+5. run tool probe
+6. run memory remember/recall
+7. save/load session and reset session file
+8. export metrics JSON
+9. switch to `warmCache` preset and rerun warm path
 
-For one-command end-to-end validation (download -> init -> stream -> prefill -> tools -> session -> errors), run:
+## Expo and runtime logs
 
-```bash
-maestro test tests/e2e-rn/maestro/full-pass.yaml
+Expo/Metro logs are visible in the terminal running:
+
+```powershell
+npm run e2e:rn:app:android
 ```
 
-Before running heavier flows (`full-pass`, multimodal/session), run this quick health check:
+Optional log capture:
 
-```bash
-maestro test tests/e2e-rn/maestro/preflight.yaml
+```powershell
+npm run e2e:rn:app:android *>&1 | Tee-Object -FilePath tests/e2e-rn/logs/expo-android.log
 ```
+
+## Optional: switch default adapter to blob
+
+```powershell
+$env:EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER="blob"; npm run start --prefix tests/e2e-rn/app -- --clear
+```
+
+## Optional: automation comes after manual stability
+
+Once manual flows are stable, run Maestro scenarios from `tests/e2e-rn/maestro`.
 
 ## Android emulator anti-flakiness checklist
-
-Disable system animations before running Maestro:
 
 ```bash
 adb shell settings put global window_animation_scale 0
@@ -117,27 +127,4 @@ adb shell settings put global animator_duration_scale 0
 Also prefer:
 
 - one emulator per test batch (avoid stale state reuse)
-- explicit assertion sync points over fixed sleeps
-- re-running failed flow once with fresh app launch before triage
-
-## Save logs to files (PowerShell)
-
-From repo root:
-
-```powershell
-npm run e2e:rn:app:android *>&1 | Tee-Object -FilePath tests/e2e-rn/logs/expo-android.log
-```
-
-Run Maestro with log capture:
-
-```powershell
-maestro test tests/e2e-rn/maestro/gemma4-mmproj.yaml *>&1 | Tee-Object -FilePath tests/e2e-rn/logs/maestro-gemma4-mmproj.log
-```
-
-Create `tests/e2e-rn/logs` first if needed.
-
-Capture Android runtime logs (PowerShell):
-
-```powershell
-adb logcat -T 1m | Tee-Object -FilePath tests/e2e-rn/logs/adb-logcat.log
-```
+- re-running failed manual step once after fresh app launch

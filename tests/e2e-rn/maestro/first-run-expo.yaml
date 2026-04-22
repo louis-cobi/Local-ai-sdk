@@ -1,7 +1,8 @@
 appId: com.localaisdk.e2e
 ---
-# Full debug workflow using atomic steps.
-- runFlow: preflight.yaml
+# Composite workflow (expo adapter): 01 -> 08
+- runFlow: 01-cold-state.yaml
+- assertVisible: "Download adapter: expo"
 - runFlow: 02-download-install.yaml
 - runFlow: 03-provider-capabilities.yaml
 - runFlow: 04-send-message.yaml
@@ -9,5 +10,3 @@ appId: com.localaisdk.e2e
 - runFlow: 06-session.yaml
 - runFlow: 07-memory.yaml
 - runFlow: 08-export-metrics.yaml
-- runFlow: 09-error-surface.yaml
-- takeScreenshot: "fullpass-70-error"

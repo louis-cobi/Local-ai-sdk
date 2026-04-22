@@ -1,0 +1,18 @@
+appId: com.localaisdk.e2e
+---
+# Step 04: one deterministic send turn.
+- launchApp
+- assertVisible:
+    id: e2e-engine-ready
+- tapOn:
+    id: e2e-input
+- inputText: "Send test: answer in one short sentence."
+- swipe:
+    start: 50%,85%
+    end: 50%,30%
+- tapOn:
+    id: e2e-send
+- assertVisible:
+    id: e2e-assistant-last
+- assertVisible:
+    id: e2e-send-duration
