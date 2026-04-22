@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitepress';
+import { withMermaid } from 'vitepress-plugin-mermaid';
 
-export default defineConfig({
+export default withMermaid(
+  defineConfig({
   title: 'local-ai-sdk',
   description: 'Professional V0.0.0 baseline documentation for local-ai-sdk.',
   lang: 'en-US',
@@ -52,4 +54,8 @@ export default defineConfig({
     ],
     socialLinks: [{ icon: 'github', link: 'https://github.com/Cobi/Local-ai-sdk' }],
   },
-});
+  }),
+  {
+    mermaid: {},
+  },
+);
