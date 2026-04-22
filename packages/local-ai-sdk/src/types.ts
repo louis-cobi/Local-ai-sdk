@@ -1,5 +1,6 @@
 import type { ToolDefinition } from './tools/define-tool.js';
 import type { SessionStorageAdapter } from './core/session-storage.js';
+import type { CompletionAdvancedParams } from './providers/types.js';
 
 /** Chat role aligned with common chat templates. */
 export type ChatRole = 'user' | 'assistant' | 'system' | 'tool';
@@ -24,6 +25,7 @@ export type ChatMessage = {
 export type SendMessageInput = {
   text: string;
   mediaParts?: UserMediaPart[];
+  completion?: CompletionAdvancedParams;
 };
 
 export type ToolMode = 'native' | 'json';
@@ -86,6 +88,8 @@ export type EngineConfig = {
   temperature?: number;
   /** Optional stop sequences passed to the provider. */
   stop?: string[];
+  /** Default completion controls applied on each turn. */
+  completionDefaults?: CompletionAdvancedParams;
   /**
    * Extra strings included in the seed fingerprint (e.g. model path, `n_ctx`)
    * to invalidate incompatible session files.

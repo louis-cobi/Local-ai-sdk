@@ -83,6 +83,13 @@ For RN/Expo large-file downloads, see adapter-based options in [docs/GETTING-STA
 | llama.rn | `>=0.5.0` | Peer dependency for runtime provider usage. |
 | Zod | `v4` | `defineToolZod` uses `z.toJSONSchema` from Zod v4. |
 
+## Breaking changes (provider contract)
+
+- `LLMProvider` now includes the advanced llama runtime surface (parallel, multimodal status, LoRA, vocoder, tokenize/detokenize, rerank, bench, cache controls).
+- `CompletionRequest` now supports advanced inference controls (`top_k`, `top_p`, penalties, `grammar`, `response_format`, thinking controls, template kwargs, and related options).
+- `TokenChunk` now carries optional structured fields (`content`, `reasoning_content`, `tool_calls`, `accumulated_text`, `requestId`).
+- Custom providers built against the previous minimal contract must be updated.
+
 ## Download reliability
 
 - `downloadModel` now supports streaming writes, retry/backoff, optional `AbortSignal`, and optional SHA-256 validation.

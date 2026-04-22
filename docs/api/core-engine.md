@@ -57,7 +57,7 @@ Runs one user turn end-to-end.
 - **Parameters**
   - `userInput`
     - `string` plain text, or
-    - `SendMessageInput` multimodal payload
+    - `SendMessageInput` multimodal payload + optional per-turn `completion` overrides
   - `onToken` optional token callback for streaming
 - **Behavior**
   - Validates non-empty text and/or media

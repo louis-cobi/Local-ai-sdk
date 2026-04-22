@@ -26,6 +26,58 @@ function mockProvider(script: Array<{ res: CompletionResult }>): LLMProvider {
     embed: vi.fn(async (text: string) => {
       return Array.from({ length: 8 }, (_, k) => (text.charCodeAt(0) + k) / 255);
     }),
+    tokenize: vi.fn(async () => ({ tokens: [] })),
+    detokenize: vi.fn(async () => ''),
+    rerank: vi.fn(async () => []),
+    bench: vi.fn(async () => ({
+      nKvMax: 0,
+      nBatch: 0,
+      nUBatch: 0,
+      flashAttn: 0,
+      isPpShared: 0,
+      nGpuLayers: 0,
+      nThreads: 0,
+      nThreadsBatch: 0,
+      pp: 0,
+      tg: 0,
+      pl: 0,
+      nKv: 0,
+      tPp: 0,
+      speedPp: 0,
+      tTg: 0,
+      speedTg: 0,
+      t: 0,
+      speed: 0,
+    })),
+    clearCache: vi.fn(async () => {}),
+    initMultimodal: vi.fn(async () => true),
+    isMultimodalEnabled: vi.fn(async () => false),
+    getMultimodalSupport: vi.fn(async () => ({ vision: false, audio: false })),
+    releaseMultimodal: vi.fn(async () => {}),
+    applyLoraAdapters: vi.fn(async () => {}),
+    removeLoraAdapters: vi.fn(async () => {}),
+    getLoadedLoraAdapters: vi.fn(async () => []),
+    initVocoder: vi.fn(async () => true),
+    isVocoderEnabled: vi.fn(async () => false),
+    getFormattedAudioCompletion: vi.fn(async () => ({ prompt: '' })),
+    getAudioCompletionGuideTokens: vi.fn(async () => []),
+    decodeAudioTokens: vi.fn(async () => []),
+    releaseVocoder: vi.fn(async () => {}),
+    loadModelInfo: vi.fn(async () => ({})),
+    parallel: {
+      completion: vi.fn(async () => ({
+        requestId: 1,
+        promise: Promise.resolve({ text: '', content: '', tool_calls: [] }),
+        stop: async () => {},
+      })),
+      embedding: vi.fn(async () => ({ requestId: 1, promise: Promise.resolve({ embedding: [] }) })),
+      rerank: vi.fn(async () => ({ requestId: 1, promise: Promise.resolve([]) })),
+      enable: vi.fn(async () => true),
+      disable: vi.fn(async () => true),
+      configure: vi.fn(async () => true),
+      getStatus: vi.fn(async () => ({ enabled: false, maxSlots: 0, queueLength: 0, activeRequests: [] })),
+      subscribeToStatus: vi.fn(async () => ({ remove: () => {} })),
+    },
   };
 }
 
@@ -194,6 +246,32 @@ describe('LocalFirstEngine', () => {
     await engine.sendMessage('m2');
 
     expect(provider.saveSession).toHaveBeenCalledTimes(2);
+  });
+
+  it('applies per-turn completion overrides', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } },
+      { res: { text: 'ok', content: 'ok', tool_calls: [] } },
+    ]);
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      maxPredict: 64,
+      temperature: 0.7,
+      completionDefaults: { top_p: 0.9 },
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+    await engine.init();
+    await engine.sendMessage({
+      text: 'hello',
+      completion: { n_predict: 12, temperature: 0.2, top_k: 20 },
+    });
+    const completeCalls = (provider.complete as ReturnType<typeof vi.fn>).mock.calls;
+    const req = completeCalls[1]?.[0] as CompletionRequest;
+    expect(req.n_predict).toBe(12);
+    expect(req.temperature).toBe(0.2);
+    expect(req.top_p).toBe(0.9);
+    expect(req.top_k).toBe(20);
   });
 
   it('purges incompatible session artifacts and reseeds on init', async () => {

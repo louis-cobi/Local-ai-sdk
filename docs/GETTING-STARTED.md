@@ -59,6 +59,29 @@ await engine.init();
 await engine.sendMessage('Hello');
 ```
 
+## Per-turn completion control
+
+`sendMessage` accepts completion overrides for llama sampling/format controls:
+
+```ts
+await engine.sendMessage({
+  text: 'Return a compact JSON object.',
+  completion: {
+    n_predict: 200,
+    temperature: 0.2,
+    top_p: 0.9,
+    response_format: {
+      type: 'json_object',
+      schema: {
+        type: 'object',
+        properties: { answer: { type: 'string' } },
+        required: ['answer'],
+      },
+    },
+  },
+});
+```
+
 ## Main API surface (`local-ai-sdk`)
 
 | Export | Purpose |
@@ -70,6 +93,8 @@ await engine.sendMessage('Hello');
 | `buildTurnMessages` | Low-level turn assembly |
 | `useLocalChat` | React hook |
 | `remember` / `recall` / `embed` | When the provider exposes `embed()` |
+
+The llama provider also exposes advanced runtime APIs (`tokenize`, `detokenize`, `parallel`, multimodal status, LoRA, vocoder, model info).
 
 ## Multimodal user input
 

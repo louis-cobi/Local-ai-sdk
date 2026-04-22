@@ -12,7 +12,34 @@ type LLMProvider = {
   saveSession(path: string): Promise<void>
   loadSession(path: string): Promise<void>
   stopCompletion(): Promise<void>
-  embed?(text: string): Promise<number[]>
+  embed(text: string): Promise<number[]>
+  tokenize(text: string, opts?: { media_paths?: string[] }): Promise<{ tokens: number[] }>
+  detokenize(tokens: number[]): Promise<string>
+  rerank(query: string, documents: string[], params?: RerankParams): Promise<RerankResult[]>
+  bench(pp: number, tg: number, pl: number, nr: number): Promise<BenchResult>
+  clearCache(clearData?: boolean): Promise<void>
+
+  initMultimodal(opts: MultimodalInitOptions): Promise<boolean>
+  isMultimodalEnabled(): Promise<boolean>
+  getMultimodalSupport(): Promise<{ vision: boolean; audio: boolean }>
+  releaseMultimodal(): Promise<void>
+
+  applyLoraAdapters(loraList: LoraAdapter[]): Promise<void>
+  removeLoraAdapters(): Promise<void>
+  getLoadedLoraAdapters(): Promise<LoraAdapter[]>
+
+  initVocoder(opts: VocoderInitOptions): Promise<boolean>
+  isVocoderEnabled(): Promise<boolean>
+  getFormattedAudioCompletion(
+    speaker: Record<string, unknown> | null,
+    textToSpeak: string
+  ): Promise<{ prompt: string; grammar?: string }>
+  getAudioCompletionGuideTokens(textToSpeak: string): Promise<number[]>
+  decodeAudioTokens(tokens: number[]): Promise<number[]>
+  releaseVocoder(): Promise<void>
+
+  loadModelInfo(modelPath?: string): Promise<Record<string, unknown>>
+  parallel: ParallelAPI
 }
 ```
 
@@ -26,6 +53,11 @@ type LLMProvider = {
 - `stop?: string[]`
 - `tools?: OpenAIStyleTool[]`
 - `tool_choice?: string`
+- `CompletionAdvancedParams` fields are also supported, including:
+  - `top_k`, `top_p`, `min_p`, `typical_p`, `seed`
+  - `penalty_*`, `mirostat*`, `grammar`, `response_format`
+  - `enable_thinking`, `reasoning_format`
+  - `chat_template_kwargs`, `parallel_tool_calls`, `force_pure_content`, and more
 
 ### `CompletionResult`
 
@@ -53,6 +85,46 @@ This type models provider-originated tool requests only.
 ### `TokenChunk`
 
 - `token: string`
+- `content?: string`
+- `reasoning_content?: string`
+- `tool_calls?: NativeToolCall[]`
+- `accumulated_text?: string`
+- `requestId?: number`
+
+### `CompletionResponseFormat`
+
+```ts
+type CompletionResponseFormat = {
+  type: 'text' | 'json_object' | 'json_schema'
+  json_schema?: { strict?: boolean; schema: object }
+  schema?: object
+}
+```
+
+### `ParallelAPI`
+
+```ts
+type ParallelAPI = {
+  completion(
+    req: CompletionRequest,
+    onToken?: (requestId: number, chunk: TokenChunk) => void
+  ): Promise<{ requestId: number; promise: Promise<CompletionResult>; stop: () => Promise<void> }>
+  embedding(
+    text: string,
+    params?: EmbeddingParams
+  ): Promise<{ requestId: number; promise: Promise<{ embedding: number[] }> }>
+  rerank(
+    query: string,
+    documents: string[],
+    params?: RerankParams
+  ): Promise<{ requestId: number; promise: Promise<RerankResult[]> }>
+  enable(config?: { n_parallel?: number; n_batch?: number }): Promise<boolean>
+  disable(): Promise<boolean>
+  configure(config: { n_parallel?: number; n_batch?: number }): Promise<boolean>
+  getStatus(): Promise<ParallelStatus>
+  subscribeToStatus(callback: (status: ParallelStatus) => void): Promise<{ remove: () => void }>
+}
+```
 
 ## Chat payload types
 

@@ -22,6 +22,8 @@ Creates a provider backed by `llama.rn` `initLlama`.
 - `mmprojPath?: string`
   - enables multimodal initialization for supported builds
 - `mmprojUseGpu?: boolean` (default `true`)
+- `mmprojImageMinTokens?: number`
+- `mmprojImageMaxTokens?: number`
 - `extra?: Partial<ContextParams>`
 - `onProgress?: (progress: number) => void`
 
@@ -31,17 +33,35 @@ Returns an object implementing `LLMProvider`:
 
 - `init` initializes context and optional multimodal projector
 - `dispose` releases multimodal state and context
-- `complete` runs generation and maps token callback
+- `complete` forwards the full advanced completion surface (`sampling`, `grammar`, `response_format`, `thinking`, template args, etc.)
 - `saveSession` and `loadSession` bridge provider KV state
 - `stopCompletion` interrupts generation
-- optional `embed` when `embedding: true`
+- `embed`, `tokenize`, `detokenize`, `rerank`, `bench`, `clearCache`
+- multimodal lifecycle + inspection (`initMultimodal`, `isMultimodalEnabled`, `getMultimodalSupport`, `releaseMultimodal`)
+- LoRA runtime controls (`applyLoraAdapters`, `removeLoraAdapters`, `getLoadedLoraAdapters`)
+- vocoder/audio APIs (`initVocoder`, `isVocoderEnabled`, `getFormattedAudioCompletion`, `getAudioCompletionGuideTokens`, `decodeAudioTokens`, `releaseVocoder`)
+- parallel queue APIs through `provider.parallel.*`
+- `loadModelInfo(modelPath?)` bridge to `loadLlamaModelInfo`
 
-## `createSpeechSynthesizer(ctx: LlamaContext): { speak(text: string): Promise<never> }`
+## Completion passthrough details
 
-Placeholder API for future llama-native TTS integration.
+`provider.complete(req)` now forwards all advanced request fields supported by `llama.rn`, including:
+
+- `top_k`, `top_p`, `min_p`, penalties, `mirostat*`, `seed`
+- `grammar`, `response_format`
+- `enable_thinking`, `reasoning_format`
+- `chat_template_kwargs`, `parallel_tool_calls`
+- `force_pure_content`, `prefill_text`, `media_paths`
+
+## `createSpeechSynthesizer(ctx: LlamaContext): { speak(text: string): Promise<number[]> }`
+
+Speech helper built on llama vocoder APIs.
 
 - **Parameters**
-  - `ctx: LlamaContext` (reserved for future native TTS integration)
-- **Current behavior**
-  - `speak(text)` always throws:
-    - `Speech synthesis is not implemented for this llama.rn build. Upgrade llama.rn or use an external TTS engine.`
+  - `ctx: LlamaContext` with vocoder methods enabled
+- **Behavior**
+  - validates vocoder support and enabled state
+  - formats audio completion prompt
+  - runs completion and decodes generated audio tokens
+- **Returns**
+  - decoded vocoder values (`number[]`)

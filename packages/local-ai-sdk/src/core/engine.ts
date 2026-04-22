@@ -43,6 +43,13 @@ function normalizeUserInput(input: string | SendMessageInput): SendMessageInput 
   return typeof input === 'string' ? { text: input } : input;
 }
 
+function mergeCompletionParams(
+  defaults: Record<string, unknown> | undefined,
+  overrides: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  return { ...(defaults ?? {}), ...(overrides ?? {}) };
+}
+
 function ragQueryFromUserMessage(msg: ChatMessage): string {
   const base = msg.content.trim();
   if (msg.mediaParts?.length) {
@@ -203,6 +210,7 @@ export class LocalFirstEngine {
 
   private async prefillSeed(): Promise<void> {
     const system = this.buildSeedSystemPrompt();
+    const completionDefaults = this.config.completionDefaults;
     await this.provider.complete({
       messages: [{ role: 'system', content: system }],
       n_predict: 0,
@@ -211,6 +219,7 @@ export class LocalFirstEngine {
       tools: this.toolMode === 'native' && this.toolsOpenAI.length ? this.toolsOpenAI : undefined,
       tool_choice:
         this.toolMode === 'native' && this.toolsOpenAI.length ? ('none' as string) : undefined,
+      ...(completionDefaults ?? {}),
     });
   }
 
@@ -327,21 +336,31 @@ export class LocalFirstEngine {
 
   private async runToolLoop(
     initialMessages: ChatMessageInput[],
+    completionOverrides: Record<string, unknown> | undefined,
     onToken?: (t: string) => void
   ): Promise<{ text: string; messages: ChatMessageInput[] }> {
     let msgs = initialMessages;
     let lastText = '';
     let includeTools = this.toolMode === 'native' && this.toolsOpenAI.length > 0;
 
+    const mergedCompletion = mergeCompletionParams(
+      this.config.completionDefaults as Record<string, unknown> | undefined,
+      completionOverrides
+    );
+    const { n_predict, temperature, stop, tools, tool_choice, ...advancedCompletion } =
+      mergedCompletion as Record<string, unknown>;
+
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       const res = await this.provider.complete(
         {
+          ...(advancedCompletion as object),
           messages: msgs,
-          n_predict: this.config.maxPredict ?? 256,
-          temperature: this.config.temperature ?? 0.7,
-          stop: this.config.stop,
-          tools: includeTools ? this.toolsOpenAI : undefined,
-          tool_choice: includeTools ? 'auto' : undefined,
+          n_predict: typeof n_predict === 'number' ? n_predict : (this.config.maxPredict ?? 256),
+          temperature:
+            typeof temperature === 'number' ? temperature : (this.config.temperature ?? 0.7),
+          stop: Array.isArray(stop) ? (stop as string[]) : this.config.stop,
+          tools: includeTools ? this.toolsOpenAI : ((tools as typeof this.toolsOpenAI) ?? undefined),
+          tool_choice: includeTools ? 'auto' : ((tool_choice as string) ?? undefined),
         },
         onToken
           ? (chunk) => {
@@ -466,6 +485,7 @@ export class LocalFirstEngine {
     const normalized = normalizeUserInput(userInput);
     const text = normalized.text.trim();
     const mediaParts = normalized.mediaParts;
+    const completionOverrides = normalized.completion as Record<string, unknown> | undefined;
     if (text.length === 0 && (!mediaParts || mediaParts.length === 0)) {
       throw new Error('sendMessage requires non-empty text and/or mediaParts.');
     }
@@ -488,7 +508,7 @@ export class LocalFirstEngine {
       userMessage: userMsg,
     });
 
-    const { text: reply } = await this.runToolLoop(turnMessages, onToken);
+    const { text: reply } = await this.runToolLoop(turnMessages, completionOverrides, onToken);
 
     this.messages = [...this.messages, { id: newId(), role: 'assistant', content: reply }];
     this.logicalTurnCount += 1;

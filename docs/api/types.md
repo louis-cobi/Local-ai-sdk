@@ -28,6 +28,7 @@ type UserMediaPart =
 
 - `text: string`
 - `mediaParts?: UserMediaPart[]`
+- `completion?: CompletionAdvancedParams`
 
 ## Configuration types
 
@@ -73,6 +74,7 @@ type SessionAutoSave = boolean | 'everyTurn' | number
 - `maxPredict?: number`
 - `temperature?: number`
 - `stop?: string[]`
+- `completionDefaults?: CompletionAdvancedParams`
 - `seedExtras?: string[]`
 
 Tool error behavior:
