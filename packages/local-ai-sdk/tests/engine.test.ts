@@ -4,6 +4,8 @@ import { createEngine } from '../src/core/engine.js';
 import { defineTool } from '../src/tools/define-tool.js';
 import { defineToolZod } from '../src/tools/define-tool-zod.js';
 import type { CompletionRequest, CompletionResult, LLMProvider } from '../src/providers/types.js';
+import type { SessionStorageAdapter } from '../src/core/session-storage.js';
+import { SESSION_META_VERSION } from '../src/core/session-meta.js';
 
 function mockProvider(script: Array<{ res: CompletionResult }>): LLMProvider {
   let i = 0;
@@ -168,5 +170,86 @@ describe('LocalFirstEngine', () => {
     expect(toolResultMsg).toBeDefined();
     expect(String(toolResultMsg?.content)).toContain('"ok":false');
     expect(String(toolResultMsg?.content)).toContain('Invalid arguments');
+  });
+
+  it('auto-saves provider session every N turns', async () => {
+    const provider = mockProvider([
+      { res: { text: '', content: '', tool_calls: [] } }, // prefill
+      { res: { text: 'r1', content: 'r1', tool_calls: [] } },
+      { res: { text: 'r2', content: 'r2', tool_calls: [] } },
+    ]);
+
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'test',
+      session: {
+        path: 'tmp/session.bin',
+        autoSave: 2,
+      },
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+
+    await engine.init();
+    await engine.sendMessage('m1');
+    await engine.sendMessage('m2');
+
+    expect(provider.saveSession).toHaveBeenCalledTimes(2);
+  });
+
+  it('purges incompatible session artifacts and reseeds on init', async () => {
+    const provider = mockProvider([{ res: { text: '', content: '', tool_calls: [] } }]);
+    const files = new Map<string, string>([
+      ['tmp/session.bin', 'binary-session'],
+      [
+        'tmp/session.bin.meta.json',
+        JSON.stringify({
+          version: SESSION_META_VERSION,
+          seedHash: 'stale-seed-hash',
+          summary: 'old',
+          messages: [],
+          logicalTurnCount: 7,
+        }),
+      ],
+    ]);
+
+    const storage: SessionStorageAdapter = {
+      async readText(path: string) {
+        return files.has(path) ? files.get(path)! : null;
+      },
+      async writeText(path: string, data: string) {
+        files.set(path, data);
+      },
+      async exists(path: string) {
+        return files.has(path);
+      },
+      async delete(path: string) {
+        files.delete(path);
+      },
+    };
+
+    const engine = createEngine({
+      provider,
+      systemPrompt: 'new prompt',
+      session: {
+        path: 'tmp/session.bin',
+        storage,
+      },
+      memory: { windowSize: 4, summaryThreshold: 1000 },
+    });
+
+    await engine.init();
+
+    expect(provider.loadSession).not.toHaveBeenCalled();
+    await expect(storage.exists('tmp/session.bin')).resolves.toBe(false);
+    await expect(storage.exists('tmp/session.bin.meta.json')).resolves.toBe(true);
+    expect(provider.complete).toHaveBeenCalledTimes(1);
+    expect(provider.saveSession).toHaveBeenCalledTimes(1);
+    const metaRaw = await storage.readText('tmp/session.bin.meta.json');
+    expect(metaRaw).toBeTruthy();
+    const meta = JSON.parse(metaRaw!);
+    expect(meta.seedHash).not.toBe('stale-seed-hash');
+    expect(meta.summary).toBe('');
+    expect(meta.messages).toEqual([]);
+    expect(meta.logicalTurnCount).toBe(0);
   });
 });

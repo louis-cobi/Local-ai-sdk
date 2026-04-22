@@ -12,6 +12,7 @@ export type SessionStorageAdapter = {
 export async function createNodeSessionStorageAdapter(): Promise<SessionStorageAdapter | null> {
   try {
     const fs = await import('node:fs/promises');
+    const pathMod = await import('node:path');
     return {
       async readText(path: string) {
         try {
@@ -23,6 +24,7 @@ export async function createNodeSessionStorageAdapter(): Promise<SessionStorageA
         }
       },
       async writeText(path: string, data: string) {
+        await fs.mkdir(pathMod.dirname(path), { recursive: true });
         await fs.writeFile(path, data, 'utf8');
       },
       async exists(path: string) {
