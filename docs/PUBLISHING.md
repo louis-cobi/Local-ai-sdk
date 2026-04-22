@@ -74,6 +74,21 @@ npm run test:smoke:consumer-pack
 
 `test:smoke:consumer-pack` creates a tarball (`npm pack`), installs it into temporary Node and RN-like consumer projects, and verifies that subpath imports resolve without entrypoint breakage.
 
+## RN emulator + Maestro release gate
+
+For React Native safety before publish, validate the Android development build path:
+
+```bash
+npm run e2e:rn:app:install
+npm run e2e:rn:app:android
+npm run test:e2e:rn:preflight
+npm run test:e2e:rn:full
+```
+
+`npm run release:check` includes both RN flows (`preflight` + `full`) in addition to build/unit/packaging checks.
+
+Use `tests/e2e-rn/README.md` for log capture (`expo`, `maestro`, `adb logcat`) and emulator anti-flakiness setup.
+
 ## Consuming in another project
 
 ```bash

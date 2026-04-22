@@ -13,6 +13,12 @@
 - Use a **development build** (`expo run:android` / `expo run:ios`), not Expo Go.
 - Use release-like settings when validating performance-sensitive flows.
 
+## Android storage policy (API 33+)
+
+- E2E downloads are stored in app-specific storage (`FileSystem.documentDirectory`).
+- `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` are intentionally not required for this path.
+- This avoids runtime permission prompts and keeps emulator/device behavior consistent under scoped storage.
+
 ## Required model assets
 
 - Main model GGUF (Gemma 4 E2B IT)
@@ -29,7 +35,13 @@ EXPO_PUBLIC_E2E_MODEL_FILE=gemma-4-e2b-it-Q8_0.gguf
 EXPO_PUBLIC_E2E_MMPROJ_FILE=mmproj-gemma-4-e2b-it-f16.gguf
 EXPO_PUBLIC_E2E_MODEL_DIR=models/e2b
 EXPO_PUBLIC_E2E_SESSION_PATH=sessions/e2b-session.bin
+EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER=expo
 ```
+
+`EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER` supports:
+
+- `expo` -> `createExpoFileSystemAdapter` (default, app-specific storage)
+- `blob` -> `createBlobUtilAdapter` via `react-native-blob-util`
 
 ## Host app checklist
 
@@ -52,4 +64,3 @@ EXPO_PUBLIC_E2E_SESSION_PATH=sessions/e2b-session.bin
 5. `provider-capabilities.yaml`
 6. `error-surface.yaml`
 7. `rag-restart.yaml`
-

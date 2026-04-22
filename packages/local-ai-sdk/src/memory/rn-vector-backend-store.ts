@@ -3,6 +3,12 @@ import { InMemoryVectorStore, type VectorStore } from './store.js';
 
 type RnBackendConfig = NonNullable<MemoryOptions['rnVectorBackend']>;
 
+async function optionalImport(moduleName: string): Promise<void> {
+  // Avoid static bundler resolution for optional RN backends.
+  const dynamicImporter = new Function('m', 'return import(m)') as (m: string) => Promise<unknown>;
+  await dynamicImporter(moduleName);
+}
+
 /**
  * RN vector backend bootstrap with graceful in-memory fallback.
  * Current implementation checks backend availability and uses in-memory vectors.
@@ -25,9 +31,9 @@ export class RnVectorBackendStore implements VectorStore {
   private async bootstrap(): Promise<void> {
     try {
       if (this.config.backend === 'op-sqlite') {
-        await import('@op-engineering/op-sqlite');
+        await optionalImport('@op-engineering/op-sqlite');
       } else {
-        await import('expo-vector-search');
+        await optionalImport('expo-vector-search');
       }
       this.backendReady = true;
     } catch {

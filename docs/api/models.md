@@ -122,6 +122,15 @@ Notes:
 - Supports `onProgress` through `request.progress` when available
 - Does not enforce `signal`/`checksum` internally
 
+## E2E harness adapter toggle (RN)
+
+The React Native E2E harness uses a runtime switch for download backend selection:
+
+- `EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER=expo` (default)
+- `EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER=blob`
+
+This helps validate both adapter paths before publishing.
+
 ### Minimal adapter shapes
 
 #### `ExpoFileSystemLike`

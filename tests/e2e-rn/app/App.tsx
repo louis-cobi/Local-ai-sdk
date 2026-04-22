@@ -3,13 +3,15 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Button, ScrollView, Text, TextInput, View } from 'react-native';
 import {
   createEngine,
-  createExpoFileSystemAdapter,
-  createLlamaRNProvider,
   defineTool,
-  downloadModelWithAdapter,
-  getModelPathIfCached,
   type LocalFirstEngine,
 } from 'local-ai-sdk';
+import { createLlamaRNProvider } from 'local-ai-sdk/llama';
+import {
+  createBlobUtilAdapter,
+  createExpoFileSystemAdapter,
+  downloadModelWithAdapter,
+} from 'local-ai-sdk/models/rn';
 
 const MODEL_REPO = process.env.EXPO_PUBLIC_E2E_MODEL_REPO ?? 'ggml-org/gemma-4-E2B-it-GGUF';
 const MODEL_FILE = process.env.EXPO_PUBLIC_E2E_MODEL_FILE ?? 'gemma-4-e2b-it-Q8_0.gguf';
@@ -20,6 +22,7 @@ const E2E_SYSTEM_PROMPT =
   process.env.EXPO_PUBLIC_E2E_SYSTEM_PROMPT ??
   'You are an e2e assistant. Always be concise, call tools when useful, and include a short trace marker.';
 const E2E_PREFILL_TEXT = process.env.EXPO_PUBLIC_E2E_PREFILL_TEXT ?? 'Trace: e2e-prefill';
+const DOWNLOAD_ADAPTER = (process.env.EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER ?? 'expo').toLowerCase();
 
 type EventLevel = 'INFO' | 'OK' | 'WARN' | 'ERROR';
 
@@ -41,8 +44,11 @@ export default function App(): React.JSX.Element {
   const [logs, setLogs] = useState<EventLog[]>([]);
   const [streamTokenCount, setStreamTokenCount] = useState(0);
   const [streamCharCount, setStreamCharCount] = useState(0);
+  const [avgCharsPerSec, setAvgCharsPerSec] = useState<number | null>(null);
   const [sendDurationMs, setSendDurationMs] = useState<number | null>(null);
   const [streamDurationMs, setStreamDurationMs] = useState<number | null>(null);
+  const [initDurationMs, setInitDurationMs] = useState<number | null>(null);
+  const [memoryRecallHits, setMemoryRecallHits] = useState(0);
   const [lastToolResult, setLastToolResult] = useState('none');
   const [modelPath, setModelPath] = useState<string | null>(null);
   const [mmprojPath, setMmprojPath] = useState<string | null>(null);
@@ -52,11 +58,25 @@ export default function App(): React.JSX.Element {
   const [engineReady, setEngineReady] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [providerCapabilities, setProviderCapabilities] = useState('{}');
+  const [downloadBackend, setDownloadBackend] = useState<'expo' | 'blob'>('expo');
+  const [downloadProgressPct, setDownloadProgressPct] = useState<number | null>(null);
+  const [downloadBytes, setDownloadBytes] = useState(0);
+  const [downloadDurationMs, setDownloadDurationMs] = useState<number | null>(null);
+  const [metricsExportPath, setMetricsExportPath] = useState<string | null>(null);
   const engineRef = useRef<LocalFirstEngine | null>(null);
 
   const modelDirAbs = useMemo(() => `${FileSystem.documentDirectory ?? ''}${MODEL_DIR}`, []);
   const sessionPathAbs = useMemo(() => `${FileSystem.documentDirectory ?? ''}${SESSION_PATH}`, []);
   const fsAdapter = useMemo(() => createExpoFileSystemAdapter(FileSystem), []);
+  const blobAdapter = useMemo(() => {
+    try {
+      const mod = require('react-native-blob-util');
+      const blobUtil = mod?.default ?? mod;
+      return createBlobUtilAdapter(blobUtil);
+    } catch {
+      return null;
+    }
+  }, []);
 
   const capabilitiesText = useMemo(() => providerCapabilities, [providerCapabilities]);
 
@@ -77,30 +97,54 @@ export default function App(): React.JSX.Element {
   }
 
   async function ensureModel(filename: string): Promise<string> {
-    const cached = await getModelPathIfCached({
-      repoId: MODEL_REPO,
-      filename,
-      destinationDir: modelDirAbs,
-    });
-    if (cached) {
+    const selected = DOWNLOAD_ADAPTER === 'blob' ? 'blob' : 'expo';
+    const adapter = selected === 'blob' ? blobAdapter : fsAdapter;
+    if (!adapter) {
+      throw new Error(
+        'Blob adapter is selected but react-native-blob-util is missing. Install it or set EXPO_PUBLIC_E2E_DOWNLOAD_ADAPTER=expo.'
+      );
+    }
+    setDownloadBackend(selected);
+    setDownloadProgressPct(0);
+    setDownloadBytes(0);
+    setDownloadDurationMs(null);
+    const normalized = filename.replace(/^[\\/]+/, '').split('/').join('/');
+    const cached = `${modelDirAbs.replace(/[\\/]+$/, '')}/${normalized}`;
+    if (await adapter.exists(cached)) {
       setCacheHit(true);
+      setDownloadProgressPct(100);
       pushLog('OK', `Cache hit for ${filename}`);
       return cached;
     }
-    pushLog('INFO', `Downloading ${filename} from ${MODEL_REPO}`);
-    return downloadModelWithAdapter(
+    const t0 = Date.now();
+    pushLog('INFO', `Downloading ${filename} from ${MODEL_REPO} with ${selected} adapter`);
+    const path = await downloadModelWithAdapter(
       {
         repoId: MODEL_REPO,
         filename,
       },
       {
         destinationDir: modelDirAbs,
-        adapter: fsAdapter,
+        adapter,
+        onProgress: (loaded, total) => {
+          setDownloadBytes(loaded);
+          if (total && total > 0) {
+            setDownloadProgressPct(Math.min(100, Math.floor((loaded / total) * 100)));
+          } else {
+            setDownloadProgressPct(null);
+          }
+        },
       }
     );
+    const durationMs = Date.now() - t0;
+    setDownloadDurationMs(durationMs);
+    setDownloadProgressPct(100);
+    pushLog('OK', `Download completed in ${durationMs} ms (${filename})`);
+    return path;
   }
 
   async function initEngine(mainPath: string, projectorPath: string): Promise<void> {
+    const t0 = Date.now();
     const probeTool = defineTool<{ topic: string }>({
       name: 'probeStatus',
       description: 'Return a deterministic probe string for E2E tool-call verification.',
@@ -163,10 +207,12 @@ export default function App(): React.JSX.Element {
       },
     });
     await engine.init();
+    const elapsed = Date.now() - t0;
     engineRef.current = engine;
     setEngineReady(true);
+    setInitDurationMs(elapsed);
     setProviderCapabilities(JSON.stringify(provider.capabilities ?? {}));
-    pushLog('OK', 'Engine initialized');
+    pushLog('OK', `Engine initialized in ${elapsed} ms`);
   }
 
   async function onDownloadModel(): Promise<void> {
@@ -236,6 +282,7 @@ export default function App(): React.JSX.Element {
     setStreaming(true);
     setStreamTokenCount(0);
     setStreamCharCount(0);
+    setAvgCharsPerSec(null);
     setAssistantLast('');
     try {
       const t0 = Date.now();
@@ -247,6 +294,9 @@ export default function App(): React.JSX.Element {
       });
       const durationMs = Date.now() - t0;
       setStreamDurationMs(durationMs);
+      if (durationMs > 0) {
+        setAvgCharsPerSec(Math.round((out.length / durationMs) * 1000));
+      }
       pushLog('OK', `Streaming done in ${durationMs} ms`);
       setAssistantLast(out);
     } catch (error) {
@@ -303,7 +353,41 @@ export default function App(): React.JSX.Element {
     }
     const out = await engine.recall('gemma4-e2b marker');
     setAssistantLast(out.contextBlock || 'no-memory');
+    setMemoryRecallHits(out.hits.length);
     pushLog('OK', `Memory recall hits=${out.hits.length}`);
+  }
+
+  async function onExportMetrics(): Promise<void> {
+    try {
+      const dir = `${FileSystem.documentDirectory ?? ''}e2e-metrics`;
+      await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
+      const file = `${dir}/metrics-${Date.now()}.json`;
+      const payload = {
+        modelRepo: MODEL_REPO,
+        modelFile: MODEL_FILE,
+        mmprojFile: MMPROJ_FILE,
+        downloadBackend,
+        downloadProgressPct,
+        downloadBytes,
+        downloadDurationMs,
+        initDurationMs,
+        sendDurationMs,
+        streamDurationMs,
+        streamTokenCount,
+        streamCharCount,
+        avgCharsPerSec,
+        memoryRecallHits,
+        providerCapabilities: JSON.parse(providerCapabilities || '{}'),
+        errorBanner,
+        assistantLast,
+        exportedAt: new Date().toISOString(),
+      };
+      await FileSystem.writeAsStringAsync(file, JSON.stringify(payload, null, 2));
+      setMetricsExportPath(file);
+      pushLog('OK', `Metrics exported: ${file}`);
+    } catch (error) {
+      setError(error);
+    }
   }
 
   async function onToolProbe(): Promise<void> {
@@ -342,6 +426,15 @@ export default function App(): React.JSX.Element {
       {renderStatusLine('mmproj file', MMPROJ_FILE)}
       {renderStatusLine('System prompt', E2E_SYSTEM_PROMPT, 'e2e-system-prompt')}
       {renderStatusLine('Prefill', E2E_PREFILL_TEXT, 'e2e-prefill')}
+      {renderStatusLine('Download adapter', downloadBackend, 'e2e-download-adapter')}
+      {renderStatusLine('Download progress', downloadProgressPct == null ? 'n/a' : `${downloadProgressPct}%`, 'e2e-download-progress')}
+      {renderStatusLine('Download bytes', String(downloadBytes), 'e2e-download-bytes')}
+      {renderStatusLine(
+        'Download duration ms',
+        downloadDurationMs == null ? 'n/a' : String(downloadDurationMs),
+        'e2e-download-duration'
+      )}
+      {renderStatusLine('Init duration ms', initDurationMs == null ? 'n/a' : String(initDurationMs), 'e2e-init-duration')}
       {renderStatusLine('Engine ready', engineReady ? 'yes' : 'no', 'e2e-engine-ready')}
       {renderStatusLine('Session path', sessionPathAbs, 'e2e-session-path')}
       {renderStatusLine('Send duration ms', sendDurationMs == null ? 'n/a' : String(sendDurationMs), 'e2e-send-duration')}
@@ -350,7 +443,10 @@ export default function App(): React.JSX.Element {
         `${streamTokenCount} chunks / ${streamCharCount} chars / ${streamDurationMs ?? 'n/a'} ms`,
         'e2e-stream-metrics'
       )}
+      {renderStatusLine('Average chars/s', avgCharsPerSec == null ? 'n/a' : String(avgCharsPerSec), 'e2e-avg-chars-sec')}
+      {renderStatusLine('Memory recall hits', String(memoryRecallHits), 'e2e-memory-hits')}
       {renderStatusLine('Last tool result', lastToolResult, 'e2e-tool-last-result')}
+      {renderStatusLine('Metrics export path', metricsExportPath ?? 'n/a', 'e2e-metrics-export-path')}
 
       <Text testID="e2e-provider-capabilities">capabilities: {capabilitiesText}</Text>
       {modelReady ? <Text testID="e2e-model-ready">model-ready</Text> : null}
@@ -397,6 +493,9 @@ export default function App(): React.JSX.Element {
       </View>
       <View>
         <Button testID="e2e-memory-query" title="Recall" onPress={() => void onMemoryQuery()} />
+      </View>
+      <View>
+        <Button testID="e2e-export-metrics" title="Export metrics" onPress={() => void onExportMetrics()} />
       </View>
 
       <Text style={{ fontWeight: '700', marginTop: 8 }}>Event log</Text>

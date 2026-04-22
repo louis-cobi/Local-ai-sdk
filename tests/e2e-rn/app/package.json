@@ -13,8 +13,10 @@
     "expo-file-system": "^18.0.11",
     "llama.rn": "^0.12.0-rc.9",
     "local-ai-sdk": "file:../../../packages/local-ai-sdk",
-    "react": "^19.0.0",
-    "react-native": "^0.79.0"
+    "react": "19.0.0",
+    "react-native": "^0.79.0",
+    "react-native-blob-util": "^0.22.2",
+    "zod": "^4.0.1"
   },
   "devDependencies": {
     "@babel/plugin-transform-class-static-block": "^7.28.6",

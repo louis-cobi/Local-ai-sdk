@@ -19,7 +19,7 @@
           "enableEntitlements": true,
           "entitlementsProfile": "production",
           "forceCxx20": true,
-          "enableOpenCL": true
+          "enableOpenCLAndHexagon": true
         }
       ]
     ]

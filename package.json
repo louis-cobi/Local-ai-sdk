@@ -18,6 +18,7 @@
     "test:e2e:rn:rag-restart": "maestro test tests/e2e-rn/maestro/rag-restart.yaml",
     "test:e2e:rn:download": "maestro test tests/e2e-rn/maestro/download-model.yaml",
     "test:e2e:rn:stream-stop": "maestro test tests/e2e-rn/maestro/chat-stream-stop.yaml",
+    "test:e2e:rn:preflight": "maestro test tests/e2e-rn/maestro/preflight.yaml",
     "test:e2e:rn:capabilities": "maestro test tests/e2e-rn/maestro/provider-capabilities.yaml",
     "test:e2e:rn:error-surface": "maestro test tests/e2e-rn/maestro/error-surface.yaml",
     "test:e2e:rn:full": "maestro test tests/e2e-rn/maestro/full-pass.yaml",
@@ -30,7 +31,7 @@
     "test:packaging": "tsc -p tsconfig.packaging.json --noEmit",
     "test:smoke:exports": "node ./tests/packaging/smoke-exports.mjs && node ./tests/packaging/smoke-exports.cjs",
     "test:smoke:consumer-pack": "node ./tests/packaging/smoke-consumer-pack.mjs",
-    "release:check": "npm run build && npm run test && npm run test:packaging && npm run test:smoke:exports && npm run test:smoke:consumer-pack && npm run test:e2e:rn:full"
+    "release:check": "npm run build && npm run test && npm run test:packaging && npm run test:smoke:exports && npm run test:smoke:consumer-pack && npm run test:e2e:rn:preflight && npm run test:e2e:rn:full"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

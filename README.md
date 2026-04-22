@@ -110,6 +110,20 @@ For RN/Expo large-file downloads, see adapter-based options in [docs/GETTING-STA
 
 - `npm run build` — build SDK package  
 - `npm test` — run Vitest across packages  
+- `npm run test:e2e:rn:preflight` — fast Android RN e2e sanity check
+- `npm run test:e2e:rn:full` — full Expo + llama.rn + Maestro validation
+- `npm run release:check` — release gate (build + tests + packaging + RN preflight/full)
+
+## RN pre-publish gate (Android emulator + Maestro)
+
+Before publishing, run the RN validation gate on a development build:
+
+1. `npm run e2e:rn:app:install`
+2. `npm run e2e:rn:app:android`
+3. `npm run test:e2e:rn:preflight`
+4. `npm run test:e2e:rn:full`
+
+For log capture and emulator stability checklist, see [tests/e2e-rn/README.md](tests/e2e-rn/README.md).
 
 ## License
 

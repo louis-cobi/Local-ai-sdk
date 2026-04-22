@@ -1,7 +1,14 @@
 appId: com.localaisdk.e2e
 ---
+- launchApp
+- assertVisible:
+    id: e2e-download-model
+- assertVisible:
+    id: e2e-download-mmproj
 - tapOn:
     id: e2e-download-model
+- assertVisible:
+    id: e2e-log-count
 - tapOn:
     id: e2e-download-mmproj
 - assertVisible:

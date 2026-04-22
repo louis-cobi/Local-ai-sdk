@@ -4,11 +4,19 @@ appId: com.localaisdk.e2e
 # download -> init -> stream -> prefill -> tools -> session -> errors
 
 - launchApp
+- assertVisible:
+    id: e2e-restart-marker
+- assertVisible:
+    id: e2e-download-model
+- assertVisible:
+    id: e2e-download-mmproj
 - takeScreenshot: "fullpass-00-launch"
 
 # 1) download
 - tapOn:
     id: e2e-download-model
+- assertVisible:
+    id: e2e-log-count
 - tapOn:
     id: e2e-download-mmproj
 - assertVisible:
@@ -36,6 +44,8 @@ appId: com.localaisdk.e2e
     id: e2e-assistant-last
 - assertVisible:
     id: e2e-stream-metrics
+- assertVisible:
+    id: e2e-log-count
 - takeScreenshot: "fullpass-30-stream"
 
 # 4) prefill + system prompt visibility
@@ -67,6 +77,8 @@ appId: com.localaisdk.e2e
 # Relaunch to guarantee empty input and deterministic error path.
 - stopApp
 - launchApp
+- assertVisible:
+    id: e2e-send
 - tapOn:
     id: e2e-send
 - assertVisible:

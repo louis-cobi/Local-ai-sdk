@@ -66,6 +66,7 @@ maestro test tests/e2e-rn/maestro/gemma4-mmproj.yaml
 maestro test tests/e2e-rn/maestro/session-multimodal-save-load.yaml
 maestro test tests/e2e-rn/maestro/rag-restart.yaml
 maestro test tests/e2e-rn/maestro/download-model.yaml
+maestro test tests/e2e-rn/maestro/preflight.yaml
 maestro test tests/e2e-rn/maestro/chat-stream-stop.yaml
 maestro test tests/e2e-rn/maestro/provider-capabilities.yaml
 maestro test tests/e2e-rn/maestro/error-surface.yaml
@@ -80,8 +81,11 @@ You have two result surfaces:
   - runtime status: model/mmproj ready, cache hit, engine ready
   - model config: repo/file names
   - prompt controls: system prompt + prefill text
-  - stream metrics: chunk count, char count, duration
+  - stream metrics: chunk count, char count, duration, avg chars/s
+  - download metrics: backend, progress, bytes, duration
+  - init/session/memory metrics: init duration, session path, memory recall hits
   - tool path: dedicated `Tool probe` button + last tool result
+  - metrics export: `Export metrics` button writes JSON in app storage
   - errors: stable banner (`e2e-error-banner`)
   - live event log with timestamps
 - **CLI logs**
@@ -93,6 +97,28 @@ For one-command end-to-end validation (download -> init -> stream -> prefill -> 
 ```bash
 maestro test tests/e2e-rn/maestro/full-pass.yaml
 ```
+
+Before running heavier flows (`full-pass`, multimodal/session), run this quick health check:
+
+```bash
+maestro test tests/e2e-rn/maestro/preflight.yaml
+```
+
+## Android emulator anti-flakiness checklist
+
+Disable system animations before running Maestro:
+
+```bash
+adb shell settings put global window_animation_scale 0
+adb shell settings put global transition_animation_scale 0
+adb shell settings put global animator_duration_scale 0
+```
+
+Also prefer:
+
+- one emulator per test batch (avoid stale state reuse)
+- explicit assertion sync points over fixed sleeps
+- re-running failed flow once with fresh app launch before triage
 
 ## Save logs to files (PowerShell)
 
@@ -109,3 +135,9 @@ maestro test tests/e2e-rn/maestro/gemma4-mmproj.yaml *>&1 | Tee-Object -FilePath
 ```
 
 Create `tests/e2e-rn/logs` first if needed.
+
+Capture Android runtime logs (PowerShell):
+
+```powershell
+adb logcat -T 1m | Tee-Object -FilePath tests/e2e-rn/logs/adb-logcat.log
+```

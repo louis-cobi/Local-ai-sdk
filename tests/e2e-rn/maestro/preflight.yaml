@@ -1,0 +1,19 @@
+appId: com.localaisdk.e2e
+---
+# Fast validation before heavier flows.
+- launchApp
+- assertVisible:
+    id: e2e-restart-marker
+- assertVisible:
+    id: e2e-model-ready
+- assertVisible:
+    id: e2e-mmproj-ready
+- tapOn:
+    id: e2e-input
+- inputText: "preflight ping"
+- tapOn:
+    id: e2e-send
+- assertVisible:
+    id: e2e-assistant-last
+- assertVisible:
+    id: e2e-log-count
