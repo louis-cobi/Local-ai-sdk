@@ -4,7 +4,7 @@ Stateful, mobile-first helpers for on-device LLMs.
 
 | Package | Description |
 | ------- | ----------- |
-| [`local-ai-sdk`](packages/local-ai-sdk) | **Main install**: engine + llama.rn adapter helpers + HF download helpers |
+| [`local-ai-sdk`](packages/local-ai-sdk) | **Main install**: local-first runtime with split subpath entrypoints |
 
 ## Documentation
 
@@ -30,7 +30,9 @@ npm install local-ai-sdk llama.rn react
 ```
 
 ```ts
-import { createEngine, createLlamaRNProvider, downloadModel } from 'local-ai-sdk';
+import { createEngine } from 'local-ai-sdk';
+import { createLlamaRNProvider } from 'local-ai-sdk/llama';
+import { downloadModel } from 'local-ai-sdk/models/node';
 ```
 
 See [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md).
@@ -45,7 +47,9 @@ npm run build
 ## Quick start
 
 ```ts
-import { createEngine, createLlamaRNProvider, downloadModel } from 'local-ai-sdk';
+import { createEngine } from 'local-ai-sdk';
+import { createLlamaRNProvider } from 'local-ai-sdk/llama';
+import { downloadModel } from 'local-ai-sdk/models/node';
 
 const modelPath = await downloadModel({
   repoId: 'ggml-org/gemma-4-E2B-it-GGUF',

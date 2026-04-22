@@ -1,34 +1,50 @@
 # local-ai-sdk
 
-Stateful on-device LLM runtime: seed KV (`n_predict: 0`), `saveSession` / `loadSession`, sliding window + summary + optional RAG, tools (`defineTool` / **`defineToolZod`**), multimodal user turns.
+Local-first LLM runtime for React Native (`llama.rn`): stateful turns, session persistence, tool calling, summarization, and optional memory/RAG.
 
-`defineToolZod` targets Zod v4 (`z.toJSONSchema`).
+## Entrypoints
 
-## Single package runtime
+- `local-ai-sdk` - RN-safe core engine and shared runtime types/helpers
+- `local-ai-sdk/react` - `useLocalChat`
+- `local-ai-sdk/llama` - `createLlamaRNProvider` and speech helper
+- `local-ai-sdk/models/node` - Node/Desktop downloader (`downloadModel`)
+- `local-ai-sdk/models/rn` - React Native / Expo adapters (`downloadModelWithAdapter`)
 
-This package ships the engine, llama.rn provider helpers, and Hugging Face download helpers in one npm package.
+## Install matrix
 
-Install **`local-ai-sdk`** plus peers (`llama.rn`, `react-native`, `expo`; optional `react` for `useLocalChat`).
+Install the package and only the peers required by your integration path.
 
-Provider contracts are capability-based: base runtime is minimal, advanced features are optional capabilities.
+### Core runtime + llama provider (React Native)
 
-## Peers
+```bash
+npm install local-ai-sdk llama.rn react-native expo
+```
 
-- **`llama.rn >= 0.10.0`** (required at runtime for `createLlamaRNProvider`)
-- **`react-native >= 0.79.0`**
-- **`expo >= 53.0.0`** (recommended target runtime for this package matrix)
-- **`react >= 19.0.0`** (optional; only for `useLocalChat`)
+### React hook
+
+```bash
+npm install local-ai-sdk/react react
+```
+
+### Node/Desktop model download tooling
+
+```bash
+npm install local-ai-sdk
+```
+
+Use the `local-ai-sdk/models/node` import path.
+
+## Notes
+
+- `llama.rn` and `react-native` are runtime peers for the main RN integration path.
+- `react` is only needed when using `local-ai-sdk/react`.
+- `defineToolZod` targets Zod v4 (`z.toJSONSchema`).
 
 ## Docs
 
-Monorepo:
-
-- [GETTING-STARTED](../../docs/GETTING-STARTED.md)
+- [Getting Started](../../docs/GETTING-STARTED.md)
 - [Core Engine API](../../docs/api/core-engine.md)
-- [Types](../../docs/api/types.md)
 - [Provider Contracts](../../docs/api/providers.md)
-- [React Bindings API](../../docs/api/react.md)
 - [Llama Adapter API](../../docs/api/llama.md)
 - [Model Download API](../../docs/api/models.md)
-- [POLYFILLS](../../docs/POLYFILLS.md)
-- [PUBLISHING](../../docs/PUBLISHING.md)
+- [Publishing](../../docs/PUBLISHING.md)

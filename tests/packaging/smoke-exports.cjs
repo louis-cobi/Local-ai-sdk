@@ -7,11 +7,15 @@ function assertExists(path) {
 }
 
 assertExists('./packages/local-ai-sdk/dist/index.cjs');
+assertExists('./packages/local-ai-sdk/dist/react.cjs');
+assertExists('./packages/local-ai-sdk/dist/llama.cjs');
+assertExists('./packages/local-ai-sdk/dist/models/node.cjs');
+assertExists('./packages/local-ai-sdk/dist/models/rn.cjs');
 
 const sdkDist = fs.readFileSync('./packages/local-ai-sdk/dist/index.cjs', 'utf8');
-if (!sdkDist.includes('createLlamaRNProvider')) {
-  throw new Error('CJS bundle does not expose createLlamaRNProvider symbol');
+if (sdkDist.includes('createLlamaRNProvider')) {
+  throw new Error('Core CJS bundle must not expose llama entrypoint symbols');
 }
-if (!sdkDist.includes('downloadModel')) {
-  throw new Error('CJS bundle does not expose downloadModel symbol');
+if (sdkDist.includes('downloadModel')) {
+  throw new Error('Core CJS bundle must not expose node downloader symbols');
 }

@@ -1,10 +1,10 @@
-# local-ai-sdk Documentation (V0.0.0 Baseline)
+# local-ai-sdk Documentation
 
-This site documents the **V0.0.0 baseline** of `local-ai-sdk`, using the current repository state as the reference implementation.
+`local-ai-sdk` is a **local-first LLM runtime for React Native (`llama.rn`)**.
 
-## What V0.0.0 does
+## What this runtime provides
 
-- Provides a **stateful local AI engine** for on-device LLM workflows.
+- Stateful on-device runtime for LLM workflows.
 - Keeps a persistent conversation state with:
   - immutable seed prefill
   - optional KV session persistence
@@ -18,9 +18,26 @@ This site documents the **V0.0.0 baseline** of `local-ai-sdk`, using the current
   - `recall`
 - Supports multimodal user input (`text`, `image`, `audio`) through provider-compatible message parts.
 
-## Package layout
+## Runtime overview
 
-- `local-ai-sdk` (main install): engine + llama.rn provider + model download helpers
+```mermaid
+flowchart TD
+  appInput[App input text or media] --> engine[LocalFirstEngine]
+  engine --> context[Build context summary memory window]
+  context --> provider[LLMProvider via local-ai-sdk/llama]
+  provider --> toolLoop[Tool loop native or json mode]
+  toolLoop --> reply[Assistant reply]
+  reply --> persist[Persist session bin + meta json]
+  persist --> appState[Updated chat state]
+```
+
+## Package layout and entrypoints
+
+- `local-ai-sdk` - RN-safe core engine/runtime surface
+- `local-ai-sdk/react` - React binding (`useLocalChat`)
+- `local-ai-sdk/llama` - llama.rn provider adapter
+- `local-ai-sdk/models/node` - Node/Desktop download helpers
+- `local-ai-sdk/models/rn` - RN/Expo adapter-based download helpers
 
 ## Start here
 

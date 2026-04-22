@@ -1,4 +1,7 @@
-# Llama Adapter API (`local-ai-sdk`)
+# Llama Adapter API (`local-ai-sdk/llama`)
+
+This entrypoint is the React Native provider bridge for the local-first runtime.
+It maps `llama.rn` context APIs into the `LLMProvider` contract used by `LocalFirstEngine`.
 
 ## `createLlamaRNProvider(options: LlamaRNProviderOptions): LLMProvider`
 

@@ -29,7 +29,8 @@
     "test:watch": "vitest",
     "test:packaging": "tsc -p tsconfig.packaging.json --noEmit",
     "test:smoke:exports": "node ./tests/packaging/smoke-exports.mjs && node ./tests/packaging/smoke-exports.cjs",
-    "release:check": "npm run build && npm run test && npm run test:packaging && npm run test:smoke:exports && npm run test:e2e:rn:full"
+    "test:smoke:consumer-pack": "node ./tests/packaging/smoke-consumer-pack.mjs",
+    "release:check": "npm run build && npm run test && npm run test:packaging && npm run test:smoke:exports && npm run test:smoke:consumer-pack && npm run test:e2e:rn:full"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

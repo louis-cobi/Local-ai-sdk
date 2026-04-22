@@ -5,8 +5,8 @@ import * as FileSystem from 'expo-file-system';
 import {
   createExpoFileSystemAdapter,
   downloadModelWithAdapter,
-  createLlamaRNProvider,
-} from 'local-ai-sdk';
+} from 'local-ai-sdk/models/rn';
+import { createLlamaRNProvider } from 'local-ai-sdk/llama';
 
 const adapter = createExpoFileSystemAdapter(FileSystem);
 

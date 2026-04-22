@@ -1,43 +1,43 @@
 # Getting started (consumer app)
 
-## Install (recommended)
+`local-ai-sdk` is a local-first LLM runtime for React Native (`llama.rn`) with split entrypoints.
 
-The **`local-ai-sdk`** package includes the engine, llama.rn adapter helpers, and Hugging Face download helpers from one entry point.
+## Entrypoints
 
-```bash
-npm install local-ai-sdk llama.rn react
-```
+- `local-ai-sdk` - core engine (RN-safe)
+- `local-ai-sdk/react` - React hook (`useLocalChat`)
+- `local-ai-sdk/llama` - llama.rn provider
+- `local-ai-sdk/models/node` - Node/Desktop model downloads
+- `local-ai-sdk/models/rn` - RN/Expo adapter-based downloads
 
-Peers: **`llama.rn`** (native runtime; required for `createLlamaRNProvider`), optional **`react`** (only if you use `useLocalChat`).
+## What this package is
 
-Recommended runtime matrix:
+`local-ai-sdk` is an on-device runtime layer, not a cloud orchestration SDK.
+It manages conversation state, tool execution flow, optional memory retrieval, and session persistence around `llama.rn`.
+
+## Installation matrix
+
+Install by usage path instead of installing everything by default.
+
+| You use | Install |
+| --- | --- |
+| Core engine + llama provider in RN app | `npm install local-ai-sdk llama.rn react-native expo` |
+| React hook (`useLocalChat`) | `npm install local-ai-sdk react` |
+| Node/Desktop download helper | `npm install local-ai-sdk` |
+| RN adapter-based downloads (Expo/blob-util) | `npm install local-ai-sdk expo-file-system` or `npm install local-ai-sdk react-native-blob-util` |
+
+Runtime matrix:
 
 - `expo >= 53`
 - `react-native >= 0.79`
 - `llama.rn >= 0.10.0`
+- `react >= 19` only for `local-ai-sdk/react`
+
+## Minimal React Native example
 
 ```ts
-import {
-  createEngine,
-  createLlamaRNProvider,
-  downloadModel,
-} from 'local-ai-sdk';
-```
-
-## Why multiple folders still exist in the monorepo?
-
-`local-ai-sdk` is the supported public package. Consumer apps should install only `local-ai-sdk`.
-
-## How [React Native AI](https://github.com/callstackincubator/ai) (Callstack) does it
-
-They ship **separate provider packages** (e.g. `@react-native-ai/llama` + `llama.rn` + often **`react-native-blob-util`**) and optional **`ai`** (Vercel AI SDK) — see [their README](https://github.com/callstackincubator/ai). Polyfills apply when using `ai`: [Polyfills – React Native AI](https://www.react-native-ai.dev/docs/polyfills).
-
-This repo does **not** require the Vercel `ai` package. See [POLYFILLS.md](./POLYFILLS.md) for `react-native-blob-util` / Expo FileSystem options and polyfill guidance.
-
-## Minimal example (React Native)
-
-```ts
-import { createEngine, defineTool, createLlamaRNProvider } from 'local-ai-sdk';
+import { createEngine, defineTool } from 'local-ai-sdk';
+import { createLlamaRNProvider } from 'local-ai-sdk/llama';
 
 const provider = createLlamaRNProvider({
   modelPath: 'file:///absolute/path/model.gguf',
@@ -49,84 +49,46 @@ const provider = createLlamaRNProvider({
 const engine = createEngine({
   provider,
   systemPrompt: 'You are a helpful on-device assistant.',
-  session: {
-    path: '/absolute/path/session.kv.bin',
-    storage: yourRnFsAdapter,
-  },
+  tools: [
+    defineTool({
+      name: 'ping',
+      description: 'Returns pong',
+      parameters: { type: 'object', properties: {}, additionalProperties: false },
+      execute: () => ({ pong: true }),
+    }),
+  ],
 });
 
 await engine.init();
 await engine.sendMessage('Hello');
 ```
 
-## Per-turn completion control
+## How a turn is executed
 
-`sendMessage` accepts completion overrides for llama sampling/format controls:
-
-```ts
-await engine.sendMessage({
-  text: 'Return a compact JSON object.',
-  completion: {
-    n_predict: 200,
-    temperature: 0.2,
-    top_p: 0.9,
-    response_format: {
-      type: 'json_object',
-      schema: {
-        type: 'object',
-        properties: { answer: { type: 'string' } },
-        required: ['answer'],
-      },
-    },
-  },
-});
+```mermaid
+flowchart TD
+  userMsg[User message] --> addMsg[Append user message]
+  addMsg --> buildCtx[Build summary + memory + window + user turn]
+  buildCtx --> complete[Provider completion call]
+  complete --> checkTools{Tool call requested}
+  checkTools -->|yes| runTools[Run tool and append role tool result]
+  runTools --> complete
+  checkTools -->|no| saveReply[Append assistant reply]
+  saveReply --> summarize[Maybe summarize old turns]
+  summarize --> persist[Write meta and optional session binary]
 ```
 
-## Main API surface (`local-ai-sdk`)
-
-| Export | Purpose |
-| ------ | ------- |
-| `createEngine` / `LocalFirstEngine` | Stateful runtime: seed KV, turns, tools, summarization, optional session files |
-| `createLlamaRNProvider` | From bundled llama adapter |
-| `downloadModel` / `getModelPathIfCached` | From bundled models helper |
-| `defineTool` / `defineToolZod` | Tool definitions |
-| `buildTurnMessages` | Low-level turn assembly |
-| `useLocalChat` | React hook |
-| `remember` / `recall` / `embed` | When the provider exposes `embed()` |
-
-The llama provider also exposes advanced runtime APIs (`tokenize`, `detokenize`, `parallel`, multimodal status, LoRA, vocoder, model info).
-
-## Multimodal user input
+## Node/Desktop model download
 
 ```ts
-await engine.sendMessage({
-  text: 'What is in this image?',
-  mediaParts: [{ type: 'image', uri: 'file:///path/to/photo.jpg' }],
-});
+import { downloadModel } from 'local-ai-sdk/models/node';
 ```
 
-## Large model downloads on React Native / Expo
-
-`local-ai-sdk` exposes a Node/Desktop default (`downloadModel`) plus RN adapters for large files:
-
-- `createExpoFileSystemAdapter(...)` for Expo projects
-- `createBlobUtilAdapter(...)` for bare RN / blob-util setups
-- `downloadModelWithAdapter(...)` for a unified API
+## React Native / Expo large-file download
 
 ```ts
 import * as FileSystem from 'expo-file-system';
-import {
-  createExpoFileSystemAdapter,
-  downloadModelWithAdapter,
-} from 'local-ai-sdk';
-
-await downloadModelWithAdapter(
-  { repoId: 'ggml-org/gemma-4-E2B-it-GGUF', filename: 'gemma-4-e2b-it-Q8_0.gguf' },
-  {
-    destinationDir: `${FileSystem.documentDirectory}models`,
-    adapter: createExpoFileSystemAdapter(FileSystem),
-  }
-);
+import { createExpoFileSystemAdapter, downloadModelWithAdapter } from 'local-ai-sdk/models/rn';
 ```
 
 ## Session metadata (React Native)
@@ -136,13 +98,8 @@ Binary KV lives at `session.path`. Chat UI state is JSON at `${session.path}.met
 For RN vector backend bootstrap, set `memory.rnVectorBackend` with backend `op-sqlite` or `expo-vector-search`.
 Current behavior is explicit: backend availability check at runtime, then in-memory vector fallback.
 
-## TypeScript
-
-Types ship with each package (`dist/index.d.ts`). Ensure `moduleResolution` is `bundler` or `node16`/`nodenext` in your app `tsconfig` if you hit resolution issues.
-
 ## See also
 
-- [Polyfills](./POLYFILLS.md) — `react-native-blob-util`, Vercel `ai`, RN polyfills  
-- [Publishing](./PUBLISHING.md) — npm release checklist  
-- [Root README](https://github.com/Cobi/Local-ai-sdk/blob/main/README.md) — Gemma 4 notes and layout  
-- [SDK roadmap](https://github.com/Cobi/Local-ai-sdk/blob/main/plan/SDK-ROADMAP.md) — architecture  
+- [Model API](./api/models.md)
+- [Llama adapter API](./api/llama.md)
+- [Publishing](./PUBLISHING.md)

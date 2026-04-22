@@ -1,5 +1,8 @@
 # Provider Contracts
 
+`local-ai-sdk` uses a capability-based provider contract so the engine stays minimal and platform-local by default.
+For React Native + `llama.rn`, use `createLlamaRNProvider` from `local-ai-sdk/llama`.
+
 ## `BaseLLMProvider`
 
 `LocalFirstEngine` now requires a minimal core provider contract:
@@ -69,6 +72,19 @@ type LLMProvider = BaseLLMProvider & Partial<{
 ```
 
 `capabilities` is optional but recommended. The engine uses it first and only falls back to method probing when absent.
+
+```mermaid
+flowchart TD
+  base[BaseLLMProvider] --> session[session capability]
+  base --> embedding[embedding capability]
+  base --> runtime[runtime capability]
+  base --> multimodal[multimodal capability]
+  base --> lora[lora capability]
+  base --> vocoder[vocoder capability]
+  base --> parallel[parallel capability]
+  base --> speech[speech capability]
+  llamaProvider[createLlamaRNProvider] --> base
+```
 
 ## Request and response types
 

@@ -1,4 +1,24 @@
-# Model Download API (`local-ai-sdk`)
+# Model Download API (`local-ai-sdk/models/node` and `local-ai-sdk/models/rn`)
+
+Import paths:
+
+- Node/Desktop helpers from `local-ai-sdk/models/node`
+- React Native adapters/helpers from `local-ai-sdk/models/rn`
+
+This split is intentional:
+
+- `models/node` can use Node built-ins for reliable large-file streaming/checksum writes.
+- `models/rn` stays adapter-driven for Expo/bare React Native compatibility.
+
+```mermaid
+flowchart TD
+  request[Download request] --> select{Import path}
+  select -->|local-ai-sdk/models/node| nodePath[node downloader]
+  select -->|local-ai-sdk/models/rn| rnPath[rn adapter downloader]
+  nodePath --> shared[shared retry abort url helpers]
+  rnPath --> shared
+  shared --> localFile[Local model file path]
+```
 
 ## URL resolution
 

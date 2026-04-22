@@ -19,8 +19,36 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "react-native": "./dist/index.js",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "react-native": "./dist/react.js",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    },
+    "./llama": {
+      "types": "./dist/llama.d.ts",
+      "react-native": "./dist/llama.js",
+      "import": "./dist/llama.js",
+      "require": "./dist/llama.cjs"
+    },
+    "./models/node": {
+      "types": "./dist/models/node.d.ts",
+      "node": {
+        "import": "./dist/models/node.js",
+        "require": "./dist/models/node.cjs"
+      },
+      "import": "./dist/models/node.js",
+      "require": "./dist/models/node.cjs"
+    },
+    "./models/rn": {
+      "types": "./dist/models/rn.d.ts",
+      "react-native": "./dist/models/rn.js",
+      "import": "./dist/models/rn.js",
+      "require": "./dist/models/rn.cjs"
     }
   },
   "files": [
@@ -52,13 +80,19 @@
     },
     "expo": {
       "optional": true
-    },
-    "llama.rn": {
-      "optional": true
-    },
-    "react-native": {
-      "optional": true
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Cobi/Local-ai-sdk.git",
+    "directory": "packages/local-ai-sdk"
+  },
+  "homepage": "https://github.com/Cobi/Local-ai-sdk/tree/main/packages/local-ai-sdk",
+  "bugs": {
+    "url": "https://github.com/Cobi/Local-ai-sdk/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "zod": "^4.0.1"

@@ -1,7 +1,8 @@
 # Example: Basic Chat
 
 ```ts
-import { createEngine, createLlamaRNProvider } from 'local-ai-sdk';
+import { createEngine } from 'local-ai-sdk';
+import { createLlamaRNProvider } from 'local-ai-sdk/llama';
 
 const provider = createLlamaRNProvider({
   modelPath: 'file:///absolute/path/model.gguf',

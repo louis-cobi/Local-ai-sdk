@@ -1,26 +1,32 @@
 # Polyfills and native helpers (React Native)
 
-## Vercel `ai` / streams / `structuredClone`
+## Local-first default behavior
 
-This project **does not** depend on the Vercel `ai` package. Core code uses standard JavaScript (Zod, `fetch` in Node for model downloads, etc.). On React Native you typically **do not** need the same polyfills as [React Native AI’s AI SDK integration](https://www.react-native-ai.dev/docs/polyfills).
+`local-ai-sdk` does not require an external AI SDK integration layer for its main flow.
+The runtime uses:
 
-### When you might need those polyfills
+- `local-ai-sdk` for the engine/runtime orchestration
+- `local-ai-sdk/llama` for `llama.rn` provider integration
+- `local-ai-sdk/models/rn` for adapter-based on-device downloads
 
-- You add **`ai` (Vercel AI SDK)** alongside this library, or use other code that expects **`structuredClone`**, **`TextEncoderStream`**, **`ReadableStream`**, etc. Then follow: [Polyfills – React Native AI](https://www.react-native-ai.dev/docs/polyfills) (Expo vs bare RN snippets).
+For this default path, React Native polyfills are only needed when another dependency in your app requires them.
+
+### When polyfills may still be required
+
+- Another dependency in your app expects browser-like stream/encoding globals (`ReadableStream`, `TextEncoderStream`, `structuredClone`, etc.).
+- Your app runtime is missing a global API used by one of your non-sdk dependencies.
 
 ---
 
-## Why does Callstack use `react-native-blob-util`?
+## File download adapters in this package
 
-[React Native AI](https://github.com/callstackincubator/ai) wires **model download and file paths** through their Llama provider using **`react-native-blob-util`** for native filesystem access, progress, and Hugging Face integration on device ([installation example](https://github.com/callstackincubator/ai)).
-
-`local-ai-sdk` keeps a **Node/Desktop default** (`downloadModel`: `fetch` + `writeFile`) and ships explicit RN adapters:
+`local-ai-sdk` keeps a **Node/Desktop** downloader in `local-ai-sdk/models/node` and ships explicit React Native adapters in `local-ai-sdk/models/rn`:
 
 - `createExpoFileSystemAdapter(...)`
 - `createBlobUtilAdapter(...)`
 - `downloadModelWithAdapter(...)`
 
-So V1 can keep React Native / Expo comfort for large downloads while preserving Node/Desktop compatibility.
+This keeps React Native / Expo support explicit for large model downloads while preserving Node/Desktop compatibility.
 
 `expo-file-system` and `react-native-blob-util` are optional peer dependencies for adapter-based RN usage.
 
@@ -28,7 +34,9 @@ So V1 can keep React Native / Expo comfort for large downloads while preserving 
 
 ## Summary
 
-| Topic | Callstack RN AI | This repo |
-| ----- | --------------- | --------- |
-| RN file downloads | `react-native-blob-util` commonly listed | Node default + optional Expo/BlobUtil adapters |
-| Vercel `ai` + polyfills | Recommended for their API surface | Only if **you** add `ai` |
+| Topic | Local-first runtime approach |
+| ----- | --------------------------- |
+| Main integration | `local-ai-sdk` + `local-ai-sdk/llama` |
+| RN file downloads | `local-ai-sdk/models/rn` with Expo/BlobUtil adapters |
+| Node/Desktop downloads | `local-ai-sdk/models/node` |
+| Polyfills | Only when required by other app dependencies |

@@ -1,5 +1,9 @@
 # Core Engine API
 
+Import from `local-ai-sdk`.
+
+`LocalFirstEngine` is the runtime orchestrator around a provider implementation (`LLMProvider`), with optional tools, memory, and session persistence.
+
 ## Factory
 
 ### `createEngine(config: EngineConfig): LocalFirstEngine`
@@ -74,6 +78,16 @@ Runs one user turn end-to-end.
 - **Throws**
   - `EngineError('E_NOT_INITIALIZED')` if `init()` was not called
   - `EngineError('E_INVALID_INPUT')` when both text and media are empty
+
+Turn execution model:
+
+1. append user message
+2. build prompt context from summary + memory + recent window + current user turn
+3. run completion (with optional streaming callback)
+4. run tool loop until final assistant text (max tool rounds enforced)
+5. append assistant response
+6. summarize old turns when threshold is reached
+7. persist metadata and optionally binary session
 
 ### `generateText(userInput: string | SendMessageInput): Promise<string>`
 

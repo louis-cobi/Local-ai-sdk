@@ -2,7 +2,8 @@
 
 ```ts
 import { z } from 'zod';
-import { createEngine, createLlamaRNProvider, defineToolZod } from 'local-ai-sdk';
+import { createEngine, defineToolZod } from 'local-ai-sdk';
+import { createLlamaRNProvider } from 'local-ai-sdk/llama';
 
 const weatherTool = defineToolZod({
   name: 'get_weather',
