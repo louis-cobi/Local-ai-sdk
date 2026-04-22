@@ -7,15 +7,11 @@ function assertExists(path) {
 }
 
 assertExists('./packages/local-ai-sdk/dist/index.cjs');
-assertExists('./packages/local-ai-sdk-bundle/dist/index.cjs');
-assertExists('./packages/local-ai-sdk-models/dist/index.cjs');
 
-const models = require('../../packages/local-ai-sdk-models/dist/index.cjs');
-if (typeof models.downloadModel !== 'function') {
-  throw new Error('CJS export downloadModel is missing');
+const sdkDist = fs.readFileSync('./packages/local-ai-sdk/dist/index.cjs', 'utf8');
+if (!sdkDist.includes('createLlamaRNProvider')) {
+  throw new Error('CJS bundle does not expose createLlamaRNProvider symbol');
 }
-
-const bundlePkg = JSON.parse(fs.readFileSync('./packages/local-ai-sdk-bundle/package.json', 'utf8'));
-if (!bundlePkg.exports || !bundlePkg.exports['.']) {
-  throw new Error('Bundle package exports map is missing');
+if (!sdkDist.includes('downloadModel')) {
+  throw new Error('CJS bundle does not expose downloadModel symbol');
 }

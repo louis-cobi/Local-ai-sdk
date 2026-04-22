@@ -1,0 +1,74 @@
+appId: com.localaisdk.e2e
+---
+# Full E2E pass:
+# download -> init -> stream -> prefill -> tools -> session -> errors
+
+- launchApp
+- takeScreenshot: "fullpass-00-launch"
+
+# 1) download
+- tapOn:
+    id: e2e-download-model
+- tapOn:
+    id: e2e-download-mmproj
+- assertVisible:
+    id: e2e-model-ready
+- assertVisible:
+    id: e2e-mmproj-ready
+- assertVisible:
+    id: e2e-log-count
+- takeScreenshot: "fullpass-10-download-ready"
+
+# 2) init
+- assertVisible:
+    id: e2e-engine-ready
+- assertVisible:
+    id: e2e-provider-capabilities
+- takeScreenshot: "fullpass-20-init-ready"
+
+# 3) stream
+- tapOn:
+    id: e2e-input
+- inputText: "Stream a short answer about local-first AI."
+- tapOn:
+    id: e2e-stream-start
+- assertVisible:
+    id: e2e-assistant-last
+- assertVisible:
+    id: e2e-stream-metrics
+- takeScreenshot: "fullpass-30-stream"
+
+# 4) prefill + system prompt visibility
+- assertVisible:
+    id: e2e-system-prompt
+- assertVisible:
+    id: e2e-prefill
+- takeScreenshot: "fullpass-40-prefill"
+
+# 5) tools
+- tapOn:
+    id: e2e-tool-probe
+- assertVisible:
+    id: e2e-tool-last-result
+- takeScreenshot: "fullpass-50-tools"
+
+# 6) session
+- tapOn:
+    id: e2e-session-save
+- tapOn:
+    id: e2e-session-load
+- assertVisible:
+    id: e2e-assistant-last
+- assertVisible:
+    id: e2e-session-path
+- takeScreenshot: "fullpass-60-session"
+
+# 7) errors
+# Relaunch to guarantee empty input and deterministic error path.
+- stopApp
+- launchApp
+- tapOn:
+    id: e2e-send
+- assertVisible:
+    id: e2e-error-banner
+- takeScreenshot: "fullpass-70-error"

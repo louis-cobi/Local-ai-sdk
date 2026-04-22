@@ -69,5 +69,43 @@ maestro test tests/e2e-rn/maestro/download-model.yaml
 maestro test tests/e2e-rn/maestro/chat-stream-stop.yaml
 maestro test tests/e2e-rn/maestro/provider-capabilities.yaml
 maestro test tests/e2e-rn/maestro/error-surface.yaml
+maestro test tests/e2e-rn/maestro/full-pass.yaml
 ```
 
+## Where to see results
+
+You have two result surfaces:
+
+- **Visual console in app** (`tests/e2e-rn/app/App.tsx`)
+  - runtime status: model/mmproj ready, cache hit, engine ready
+  - model config: repo/file names
+  - prompt controls: system prompt + prefill text
+  - stream metrics: chunk count, char count, duration
+  - tool path: dedicated `Tool probe` button + last tool result
+  - errors: stable banner (`e2e-error-banner`)
+  - live event log with timestamps
+- **CLI logs**
+  - Expo/Metro logs in the terminal running `npm run e2e:rn:app:android`
+  - Maestro scenario logs in the terminal running `maestro test ...`
+
+For one-command end-to-end validation (download -> init -> stream -> prefill -> tools -> session -> errors), run:
+
+```bash
+maestro test tests/e2e-rn/maestro/full-pass.yaml
+```
+
+## Save logs to files (PowerShell)
+
+From repo root:
+
+```powershell
+npm run e2e:rn:app:android *>&1 | Tee-Object -FilePath tests/e2e-rn/logs/expo-android.log
+```
+
+Run Maestro with log capture:
+
+```powershell
+maestro test tests/e2e-rn/maestro/gemma4-mmproj.yaml *>&1 | Tee-Object -FilePath tests/e2e-rn/logs/maestro-gemma4-mmproj.log
+```
+
+Create `tests/e2e-rn/logs` first if needed.

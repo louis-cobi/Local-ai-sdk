@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/local-ai-sdk"
   ],
   "scripts": {
-    "build": "npm run build -w local-ai-sdk-models && npm run build -w local-ai-sdk-llama && npm run build -w local-ai-sdk && npm run build -w local-ai-sdk-bundle",
+    "build": "npm run build -w local-ai-sdk",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
@@ -20,6 +20,7 @@
     "test:e2e:rn:stream-stop": "maestro test tests/e2e-rn/maestro/chat-stream-stop.yaml",
     "test:e2e:rn:capabilities": "maestro test tests/e2e-rn/maestro/provider-capabilities.yaml",
     "test:e2e:rn:error-surface": "maestro test tests/e2e-rn/maestro/error-surface.yaml",
+    "test:e2e:rn:full": "maestro test tests/e2e-rn/maestro/full-pass.yaml",
     "test:e2e:rn": "npm run test:e2e:rn:download && npm run test:e2e:rn:gemma4 && npm run test:e2e:rn:stream-stop && npm run test:e2e:rn:session && npm run test:e2e:rn:capabilities && npm run test:e2e:rn:error-surface && npm run test:e2e:rn:rag-restart",
     "e2e:rn:app:install": "npm install --prefix tests/e2e-rn/app",
     "e2e:rn:app:start": "npm run start --prefix tests/e2e-rn/app",
@@ -27,7 +28,8 @@
     "e2e:rn:app:ios": "npm run ios --prefix tests/e2e-rn/app",
     "test:watch": "vitest",
     "test:packaging": "tsc -p tsconfig.packaging.json --noEmit",
-    "test:smoke:exports": "node ./tests/packaging/smoke-exports.mjs && node ./tests/packaging/smoke-exports.cjs"
+    "test:smoke:exports": "node ./tests/packaging/smoke-exports.mjs && node ./tests/packaging/smoke-exports.cjs",
+    "release:check": "npm run build && npm run test && npm run test:packaging && npm run test:smoke:exports && npm run test:e2e:rn:full"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

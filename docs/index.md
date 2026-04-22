@@ -20,10 +20,7 @@ This site documents the **V0.0.0 baseline** of `local-ai-sdk`, using the current
 
 ## Package layout
 
-- `local-ai-sdk` (main install): engine + tooling + re-exports for llama provider and model downloads
-- `local-ai-sdk-llama`: `llama.rn`-backed provider
-- `local-ai-sdk-models`: Hugging Face download/cache helpers
-- `local-ai-sdk-bundle`: deprecated alias to `local-ai-sdk`
+- `local-ai-sdk` (main install): engine + llama.rn provider + model download helpers
 
 ## Start here
 

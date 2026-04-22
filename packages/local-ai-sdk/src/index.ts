@@ -1,8 +1,8 @@
-/**
- * Llama RN adapter and Hugging Face download helpers are included as dependencies.
- * Import everything from `local-ai-sdk` alone, or use subpath installs only for advanced tree-shaking.
- */
-export { createLlamaRNProvider, type LlamaRNProviderOptions, createSpeechSynthesizer } from 'local-ai-sdk-llama';
+export {
+  createLlamaRNProvider,
+  type LlamaRNProviderOptions,
+} from './providers/llama/create-provider.js';
+export { createSpeechSynthesizer } from './providers/llama/speech.js';
 export {
   createBlobUtilAdapter,
   createExpoFileSystemAdapter,
@@ -15,7 +15,7 @@ export {
   type DownloadModelSource,
   type ExpoFileSystemLike,
   type ReactNativeDownloadAdapter,
-} from 'local-ai-sdk-models';
+} from './models/download.js';
 
 export { createEngine, LocalFirstEngine } from './core/engine.js';
 export { buildTurnMessages } from './core/context-builder.js';

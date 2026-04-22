@@ -4,10 +4,7 @@ Stateful, mobile-first helpers for on-device LLMs.
 
 | Package | Description |
 | ------- | ----------- |
-| [`local-ai-sdk`](packages/local-ai-sdk) | **Main install**: engine + re-exports **Llama** adapter and **HF download** helpers (depends on the two packages below) |
-| [`local-ai-sdk-models`](packages/local-ai-sdk-models) | Hugging Face download / cache (also pulled in by `local-ai-sdk`) |
-| [`local-ai-sdk-llama`](packages/local-ai-sdk-llama) | [`llama.rn`](https://github.com/mybigday/llama.rn) `LLMProvider` (also pulled in by `local-ai-sdk`) |
-| [`local-ai-sdk-bundle`](packages/local-ai-sdk-bundle) | **Deprecated** — thin alias of `local-ai-sdk` |
+| [`local-ai-sdk`](packages/local-ai-sdk) | **Main install**: engine + llama.rn adapter helpers + HF download helpers |
 
 ## Documentation
 
@@ -95,19 +92,19 @@ For RN/Expo large-file downloads, see adapter-based options in [docs/GETTING-STA
 
 - `downloadModel` now supports streaming writes, retry/backoff, optional `AbortSignal`, and optional SHA-256 validation.
 - `downloadModelWithAdapter` keeps the same adapter flow for React Native and now accepts retry/signal/checksum options.
-- `llama-swap` is a runtime orchestration concern (planned in V3), not the transport used by `local-ai-sdk-models` downloads.
+- `llama-swap` is a runtime orchestration concern (planned in V3), not the transport used by `local-ai-sdk` downloads.
 
 ## Gemma 4 (E2B / E4B) on device
 
 - **E2B** and **E4B** are multimodal instruction-tuned models (text + image; small variants often support audio input). See the [Gemma 4 announcement](https://huggingface.co/blog/gemma4).
 - You need the **main GGUF** and the matching **`mmproj`** file from the same Hugging Face repo (e.g. [ggml-org/gemma-4-E2B-it-GGUF](https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF)).
 - Use a **realistic `n_ctx`** on phones (e.g. 4096–8192) even though marketing lists 128k.
-- Prefer **`ctx_shift: false`** for multimodal; `local-ai-sdk-llama` sets this automatically when `mmprojPath` is provided.
+- Prefer **`ctx_shift: false`** for multimodal; `local-ai-sdk` sets this automatically when `mmprojPath` is provided.
 - **Embeddings for RAG** usually require a separate embedding-capable setup; do not assume the chat GGUF doubles as an embedder unless your build supports it.
 
 ## Scripts
 
-- `npm run build` — build workspaces in dependency order  
+- `npm run build` — build SDK package  
 - `npm test` — run Vitest across packages  
 
 ## License

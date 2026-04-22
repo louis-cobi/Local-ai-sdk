@@ -1,10 +1,11 @@
-# Llama Adapter API (`local-ai-sdk-llama`)
+# Llama Adapter API (`local-ai-sdk`)
 
 ## `createLlamaRNProvider(options: LlamaRNProviderOptions): LLMProvider`
 
 Creates a provider backed by `llama.rn` `initLlama`.
 
 Runtime matrix for this adapter:
+
 - `llama.rn >= 0.10.0`
 - `react-native >= 0.79.0`
 - `expo >= 53.0.0` (recommended)

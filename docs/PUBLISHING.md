@@ -1,6 +1,7 @@
 # Publishing to npm
 
-The **root** package (`local-ai-sdk-monorepo`) is `private: true` and is **not** published. You publish each workspace under `packages/` separately.
+The **root** package (`local-ai-sdk-monorepo`) is `private: true` and is **not** published.
+Primary public package target is **`local-ai-sdk`**.
 
 ## Prerequisites
 
@@ -10,38 +11,22 @@ The **root** package (`local-ai-sdk-monorepo`) is `private: true` and is **not**
 
 ## Versioning
 
-Bump `version` in each package you publish. Keep `local-ai-sdk`’s dependency versions on `local-ai-sdk-llama` and `local-ai-sdk-models` in sync.
-
-## Publish order (first release)
-
-`local-ai-sdk` depends on the other two; **`local-ai-sdk-llama` only peers `llama.rn`** (types come from `import type` + devDependency).
-
-1. `packages/local-ai-sdk-models` — no internal deps  
-2. `packages/local-ai-sdk-llama` — no runtime dep on `local-ai-sdk`  
-3. `packages/local-ai-sdk` — depends on 1 and 2  
-4. `packages/local-ai-sdk-bundle` (deprecated alias) — depends only on `local-ai-sdk`  
-
-The root `npm run build` script builds in this order.
+Bump `version` in `packages/local-ai-sdk/package.json` for public releases.
+Legacy packages can keep internal versions when not published.
 
 ## Commands (from repository root)
 
 Dry run (recommended):
 
 ```bash
-npm run build
-npm publish -w local-ai-sdk-models --dry-run
-npm publish -w local-ai-sdk-llama --dry-run
+npm run release:check
 npm publish -w local-ai-sdk --dry-run
-npm publish -w local-ai-sdk-bundle --dry-run
 ```
 
 Publish:
 
 ```bash
-npm publish -w local-ai-sdk-models
-npm publish -w local-ai-sdk-llama
 npm publish -w local-ai-sdk
-npm publish -w local-ai-sdk-bundle
 ```
 
 ## Monorepo metadata (optional)
@@ -58,7 +43,7 @@ In each published `package.json`, set `repository`, `homepage`, and `bugs` so np
 
 ## Prepack
 
-Each package runs `prepack` → `npm run build` so `dist/` is fresh when publishing from a clean clone.
+`local-ai-sdk` runs `prepack` → `npm run build` so `dist/` is fresh when publishing from a clean clone.
 
 ## Consuming in another project
 

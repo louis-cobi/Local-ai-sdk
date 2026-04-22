@@ -1,4 +1,4 @@
-# Model Download API (`local-ai-sdk-models`)
+# Model Download API (`local-ai-sdk`)
 
 ## URL resolution
 
@@ -89,6 +89,7 @@ Adapter-based download flow for React Native / Expo / custom native stacks.
 Builds an adapter from an Expo FileSystem-compatible object.
 
 Notes:
+
 - Supports `onProgress`
 - Does not enforce `signal`/`checksum` internally (Expo API limitations vary by runtime)
 
@@ -97,6 +98,7 @@ Notes:
 Builds an adapter from a `react-native-blob-util` compatible object.
 
 Notes:
+
 - Supports `onProgress` through `request.progress` when available
 - Does not enforce `signal`/`checksum` internally
 

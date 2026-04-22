@@ -4,14 +4,11 @@ Stateful on-device LLM runtime: seed KV (`n_predict: 0`), `saveSession` / `loadS
 
 `defineToolZod` targets Zod v4 (`z.toJSONSchema`).
 
-## What is bundled
+## Single package runtime
 
-This package **depends on** and **re-exports**:
+This package ships the engine, llama.rn provider helpers, and Hugging Face download helpers in one npm package.
 
-- **`local-ai-sdk-llama`** — `createLlamaRNProvider`, `createSpeechSynthesizer`
-- **`local-ai-sdk-models`** — `downloadModel`, `getModelPathIfCached`, `huggingFaceResolveUrl`
-
-So a normal app installs **`local-ai-sdk`** + peer **`llama.rn`** (and optional **`react`** for `useLocalChat`). You do not need three separate imports unless you maintain a custom `LLMProvider` and want to omit the Llama adapter.
+Install **`local-ai-sdk`** plus peers (`llama.rn`, `react-native`, `expo`; optional `react` for `useLocalChat`).
 
 Provider contracts are capability-based: base runtime is minimal, advanced features are optional capabilities.
 

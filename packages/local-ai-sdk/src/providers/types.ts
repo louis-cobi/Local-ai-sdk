@@ -305,4 +305,3 @@ export type LLMProvider = BaseLLMProvider &
   > & {
     capabilities?: ProviderCapabilities;
   };
-};

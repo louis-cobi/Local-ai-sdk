@@ -61,15 +61,12 @@
     }
   },
   "dependencies": {
-    "local-ai-sdk-llama": "^0.1.0",
-    "local-ai-sdk-models": "^0.1.0",
     "zod": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@types/react": "^19.1.0",
-    "local-ai-sdk-llama": "*",
-    "local-ai-sdk-models": "*",
+    "llama.rn": "^0.12.0-rc.9",
     "react": "^19.1.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

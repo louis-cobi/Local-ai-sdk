@@ -24,9 +24,11 @@ export class RnVectorBackendStore implements VectorStore {
 
   private async bootstrap(): Promise<void> {
     try {
-      const moduleName =
-        this.config.backend === 'op-sqlite' ? '@op-engineering/op-sqlite' : 'expo-vector-search';
-      await import(moduleName);
+      if (this.config.backend === 'op-sqlite') {
+        await import('@op-engineering/op-sqlite');
+      } else {
+        await import('expo-vector-search');
+      }
       this.backendReady = true;
     } catch {
       this.backendReady = false;

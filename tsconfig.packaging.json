@@ -8,9 +8,6 @@
   },
   "include": [
     "packages/local-ai-sdk/src/**/*.ts",
-    "packages/local-ai-sdk-models/src/**/*.ts",
-    "packages/local-ai-sdk-llama/src/**/*.ts",
-    "packages/local-ai-sdk-bundle/src/**/*.ts",
     "tests/packaging/types-smoke.ts"
   ],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

@@ -2,7 +2,7 @@
 
 ## Install (recommended)
 
-The **`local-ai-sdk`** package includes the engine, the **`local-ai-sdk-llama`** adapter, and **`local-ai-sdk-models`** (Hugging Face downloads) as **dependencies** and re-exports their APIs from one entry point.
+The **`local-ai-sdk`** package includes the engine, llama.rn adapter helpers, and Hugging Face download helpers from one entry point.
 
 ```bash
 npm install local-ai-sdk llama.rn react
@@ -11,6 +11,7 @@ npm install local-ai-sdk llama.rn react
 Peers: **`llama.rn`** (native runtime; required for `createLlamaRNProvider`), optional **`react`** (only if you use `useLocalChat`).
 
 Recommended runtime matrix:
+
 - `expo >= 53`
 - `react-native >= 0.79`
 - `llama.rn >= 0.10.0`
@@ -23,15 +24,9 @@ import {
 } from 'local-ai-sdk';
 ```
 
-## Why three packages still exist in the monorepo?
+## Why multiple folders still exist in the monorepo?
 
-They are **implementation packages** linked by npm workspaces. Consumers normally install **`local-ai-sdk` only**; npm pulls `local-ai-sdk-llama` and `local-ai-sdk-models` automatically.
-
-You might install a subpackage **alone** only for unusual setups (e.g. a headless Node tool that only needs `local-ai-sdk-models`, or a custom `LLMProvider` without Llama). That is optional.
-
-## Deprecated: `local-ai-sdk-bundle`
-
-It only re-exports `local-ai-sdk`. Prefer `local-ai-sdk` directly.
+`local-ai-sdk` is the supported public package. Consumer apps should install only `local-ai-sdk`.
 
 ## How [React Native AI](https://github.com/callstackincubator/ai) (Callstack) does it
 
@@ -90,7 +85,7 @@ await engine.sendMessage({
 ## Main API surface (`local-ai-sdk`)
 
 | Export | Purpose |
-|--------|---------|
+| ------ | ------- |
 | `createEngine` / `LocalFirstEngine` | Stateful runtime: seed KV, turns, tools, summarization, optional session files |
 | `createLlamaRNProvider` | From bundled llama adapter |
 | `downloadModel` / `getModelPathIfCached` | From bundled models helper |
@@ -112,7 +107,7 @@ await engine.sendMessage({
 
 ## Large model downloads on React Native / Expo
 
-`local-ai-sdk-models` has a Node/Desktop default (`downloadModel`), plus RN adapters for large files:
+`local-ai-sdk` exposes a Node/Desktop default (`downloadModel`) plus RN adapters for large files:
 
 - `createExpoFileSystemAdapter(...)` for Expo projects
 - `createBlobUtilAdapter(...)` for bare RN / blob-util setups
@@ -148,6 +143,6 @@ Types ship with each package (`dist/index.d.ts`). Ensure `moduleResolution` is `
 ## See also
 
 - [Polyfills](./POLYFILLS.md) — `react-native-blob-util`, Vercel `ai`, RN polyfills  
-- [Publishing](./PUBLISHING.md) — publish order for the monorepo  
+- [Publishing](./PUBLISHING.md) — npm release checklist  
 - [Root README](https://github.com/Cobi/Local-ai-sdk/blob/main/README.md) — Gemma 4 notes and layout  
 - [SDK roadmap](https://github.com/Cobi/Local-ai-sdk/blob/main/plan/SDK-ROADMAP.md) — architecture  

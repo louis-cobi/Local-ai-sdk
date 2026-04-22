@@ -7,12 +7,13 @@ async function assertPath(path) {
 }
 
 await assertPath(new URL('../../packages/local-ai-sdk/dist/index.js', import.meta.url));
-await assertPath(new URL('../../packages/local-ai-sdk-models/dist/index.js', import.meta.url));
-await assertPath(new URL('../../packages/local-ai-sdk-llama/dist/index.js', import.meta.url));
 
-const models = await import('../../packages/local-ai-sdk-models/dist/index.js');
-if (typeof models.downloadModel !== 'function') {
-  throw new Error('ESM export downloadModel is missing from local-ai-sdk-models');
+const sdkDist = await readFile(new URL('../../packages/local-ai-sdk/dist/index.js', import.meta.url), 'utf8');
+if (!sdkDist.includes('createLlamaRNProvider')) {
+  throw new Error('ESM bundle does not expose createLlamaRNProvider symbol');
+}
+if (!sdkDist.includes('downloadModel')) {
+  throw new Error('ESM bundle does not expose downloadModel symbol');
 }
 
 const sdkPkgRaw = await readFile(new URL('../../packages/local-ai-sdk/package.json', import.meta.url), 'utf8');

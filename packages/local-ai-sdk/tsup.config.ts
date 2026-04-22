@@ -8,6 +8,6 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   splitting: false,
-  target: 'es2022',
-  external: ['react', 'llama.rn', 'local-ai-sdk-llama', 'local-ai-sdk-models'],
+  target: 'es2019',
+  external: ['react', 'llama.rn'],
 });
