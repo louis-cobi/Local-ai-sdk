@@ -1,58 +1,24 @@
 {
-  "name": "local-ai-sdk",
-  "version": "0.1.0",
-  "description": "Stateful local LLM runtime for React Native (llama.rn): session KV cache, tools, summarization, and optional RAG.",
-  "license": "MIT",
-  "author": "",
-  "repository": {
-    "type": "git",
-    "url": ""
-  },
-  "keywords": [
-    "llama",
-    "llama.rn",
-    "react-native",
-    "local-llm",
-    "ai"
-  ],
+  "name": "local-ai-sdk-monorepo",
+  "private": true,
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "files": [
-    "dist",
-    "README.md"
+  "workspaces": [
+    "packages/*"
   ],
-  "sideEffects": false,
   "scripts": {
-    "build": "tsup",
+    "build": "npm run build -w local-ai-sdk-models && npm run build -w local-ai-sdk-llama && npm run build -w local-ai-sdk && npm run build -w local-ai-sdk-bundle",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepack": "npm run build"
-  },
-  "peerDependencies": {
-    "llama.rn": ">=0.5.0",
-    "react": ">=18.0.0"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    }
+    "test:packaging": "tsc -p tsconfig.packaging.json --noEmit",
+    "test:smoke:exports": "node ./tests/packaging/smoke-exports.mjs && node ./tests/packaging/smoke-exports.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@types/react": "^19.1.0",
-    "llama.rn": "^0.5.0",
-    "react": "^19.1.0",
-    "tsup": "^8.4.0",
     "typescript": "^5.8.0",
+    "vitepress": "^1.6.4",
     "vitest": "^3.1.0"
   },
   "engines": {

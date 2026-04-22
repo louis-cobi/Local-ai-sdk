@@ -1,0 +1,65 @@
+{
+  "name": "local-ai-sdk",
+  "version": "0.1.0",
+  "description": "Stateful local LLM runtime for React Native (llama.rn): session KV cache, tools, summarization, and optional RAG.",
+  "keywords": [
+    "llama",
+    "llama.rn",
+    "react-native",
+    "local-llm",
+    "ai",
+    "zod",
+    "gguf"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "llama.rn": ">=0.5.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "llama.rn": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "local-ai-sdk-llama": "^0.1.0",
+    "local-ai-sdk-models": "^0.1.0",
+    "zod": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.1.0",
+    "local-ai-sdk-llama": "*",
+    "local-ai-sdk-models": "*",
+    "react": "^19.1.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
