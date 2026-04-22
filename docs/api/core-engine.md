@@ -136,3 +136,58 @@ Deterministic hash for seed compatibility checks.
 ### `fnv1a32(input: string): string`
 
 Low-cost hash primitive used by `seedFingerprint`.
+
+## Message format helpers
+
+### `chatMessageToInput(m: ChatMessage): ChatMessageInput`
+
+Converts a stored `ChatMessage` into provider input format.
+
+- **Behavior**
+  - For non-user messages or user messages without media: returns `{ role, content }`.
+  - For user multimodal messages: builds `LlamaMessageContentPart[]`.
+  - Image parts are mapped to `{ type: 'image_url', image_url: { url } }`.
+  - Audio parts are mapped to `{ type: 'input_audio', input_audio: { url, format } }`.
+  - If audio format is missing, inferred default is `wav` unless URI ends with `.mp3`.
+
+### `buildUserTurnInput(userMessage: ChatMessage): ChatMessageInput`
+
+Thin helper alias to `chatMessageToInput(userMessage)`.
+
+## Memory helpers
+
+### `formatMemoryBlock(hits: VectorSearchHit[], maxChars: number): string`
+
+Formats retrieved memory hits into a bounded prompt block.
+
+- **Behavior**
+  - each hit is rendered as `- content` plus serialized metadata when present
+  - output is truncated to `maxChars` budget
+  - returns empty string for no hits
+
+### `InMemoryVectorStore`
+
+Simple cosine-similarity vector store implementation.
+
+- **Methods**
+  - `upsert(id: string, vector: number[], record: MemoryRecord): Promise<void>`
+  - `search(queryVector: number[], k: number): Promise<VectorSearchHit[]>`
+  - `delete(id: string): Promise<void>`
+
+## Session metadata and storage helpers
+
+### `createNodeSessionStorageAdapter(): Promise<SessionStorageAdapter | null>`
+
+Creates a Node `fs`-backed storage adapter for session metadata.
+
+- **Returns**
+  - `SessionStorageAdapter` in Node-capable environments
+  - `null` when Node FS modules are unavailable (for example in React Native)
+
+### `defaultMetaPath(sessionPath: string): string`
+
+Returns `${sessionPath}.meta.json`.
+
+### `SESSION_META_VERSION`
+
+Current metadata schema version constant (`1`).

@@ -40,4 +40,8 @@ Returns an object implementing `LLMProvider`:
 
 Placeholder API for future llama-native TTS integration.
 
-- Current behavior: `speak` throws an explicit not-implemented error.
+- **Parameters**
+  - `ctx: LlamaContext` (reserved for future native TTS integration)
+- **Current behavior**
+  - `speak(text)` always throws:
+    - `Speech synthesis is not implemented for this llama.rn build. Upgrade llama.rn or use an external TTS engine.`

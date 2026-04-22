@@ -31,6 +31,7 @@ This site documents the **V0.0.0 baseline** of `local-ai-sdk`, using the current
 - [Core Engine API](./api/core-engine.md): `createEngine`, `LocalFirstEngine`
 - [Types](./api/types.md): all major configuration and data contracts
 - [Provider Contracts](./api/providers.md): provider interface and completion payloads
+- [React Bindings API](./api/react.md): `useLocalChat` hook contract
 - [Llama Adapter API](./api/llama.md): `createLlamaRNProvider`
 - [Model Download API](./api/models.md): download + adapter helpers
 - [Examples](./examples/basic-chat.md): end-to-end integration examples

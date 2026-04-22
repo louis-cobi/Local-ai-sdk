@@ -11,6 +11,8 @@ Download and cache files from Hugging Face for use with `local-ai-sdk` and `loca
 - `createExpoFileSystemAdapter(expoFileSystem)` — Expo adapter factory.
 - `createBlobUtilAdapter(reactNativeBlobUtil)` — react-native-blob-util adapter factory.
 
+Full signatures and argument details are in [docs/api/models.md](../../docs/api/models.md).
+
 ## Reliability options
 
 - `signal`: supports cancellation via `AbortController`.

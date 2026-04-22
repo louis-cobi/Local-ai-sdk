@@ -109,3 +109,18 @@ Declares a tool from Zod schema and auto-converts to JSON schema.
 - `toOpenAIStyleTools(): OpenAIStyleTool[]`
 - `toPromptFragment(): string`
 - `run(name: string, rawArgs: string): Promise<unknown>`
+
+### `OpenAIStyleTool`
+
+```ts
+type OpenAIStyleTool = {
+  type: 'function'
+  function: {
+    name: string
+    description: string
+    parameters: Record<string, unknown>
+  }
+}
+```
+
+Used in `CompletionRequest.tools` when `toolMode` is `native`.

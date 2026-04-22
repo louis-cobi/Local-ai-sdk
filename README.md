@@ -14,6 +14,12 @@ Stateful, mobile-first helpers for on-device LLMs.
 | Doc | Contents |
 | --- | -------- |
 | [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) | Single-package install, API, multimodal, RN session storage |
+| [docs/api/core-engine.md](docs/api/core-engine.md) | Engine class, factories, message/memory/session helpers |
+| [docs/api/types.md](docs/api/types.md) | Core contracts and configuration types |
+| [docs/api/providers.md](docs/api/providers.md) | Provider interface and completion payload contracts |
+| [docs/api/react.md](docs/api/react.md) | React hook surface (`useLocalChat`) |
+| [docs/api/llama.md](docs/api/llama.md) | llama.rn provider options and behavior |
+| [docs/api/models.md](docs/api/models.md) | Download helpers, adapters, retry/cancel/checksum options |
 | [docs/PUBLISHING.md](docs/PUBLISHING.md) | How to publish workspace packages to npm |
 | [docs/POLYFILLS.md](docs/POLYFILLS.md) | `react-native-blob-util` vs Callstack; Vercel `ai` polyfills |
 | [plan/SDK-ROADMAP.md](plan/SDK-ROADMAP.md) | Architecture and roadmap |

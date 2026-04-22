@@ -20,4 +20,14 @@ So a normal app installs **`local-ai-sdk`** + peer **`llama.rn`** (and optional 
 
 ## Docs
 
-Monorepo: [GETTING-STARTED](../../docs/GETTING-STARTED.md) · [POLYFILLS](../../docs/POLYFILLS.md) · [PUBLISHING](../../docs/PUBLISHING.md)
+Monorepo:
+
+- [GETTING-STARTED](../../docs/GETTING-STARTED.md)
+- [Core Engine API](../../docs/api/core-engine.md)
+- [Types](../../docs/api/types.md)
+- [Provider Contracts](../../docs/api/providers.md)
+- [React Bindings API](../../docs/api/react.md)
+- [Llama Adapter API](../../docs/api/llama.md)
+- [Model Download API](../../docs/api/models.md)
+- [POLYFILLS](../../docs/POLYFILLS.md)
+- [PUBLISHING](../../docs/PUBLISHING.md)

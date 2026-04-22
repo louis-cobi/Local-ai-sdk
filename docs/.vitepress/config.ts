@@ -28,6 +28,7 @@ export default defineConfig({
           { text: 'Core Engine', link: '/api/core-engine' },
           { text: 'Types', link: '/api/types' },
           { text: 'Provider Contracts', link: '/api/providers' },
+          { text: 'React Bindings', link: '/api/react' },
           { text: 'Llama Adapter', link: '/api/llama' },
           { text: 'Model Downloads', link: '/api/models' },
         ],

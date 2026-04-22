@@ -113,6 +113,8 @@ Tool error behavior:
 - `exists(path: string): Promise<boolean>`
 - `delete(path: string): Promise<void>`
 
+`SessionOptions.storage` accepts this contract.
+
 ### `SessionMetaV1`
 
 - `version: 1`
@@ -124,3 +126,23 @@ Tool error behavior:
 ### `defaultMetaPath(sessionPath: string): string`
 
 Returns `${sessionPath}.meta.json`.
+
+### `SESSION_META_VERSION`
+
+Current metadata schema version constant (`1`).
+
+## Tool and vector contracts
+
+### `ToolDefinition<TArgs>`
+
+- `name: string`
+- `description: string`
+- `parameters: Record<string, unknown>` (JSON Schema object)
+- `execute: (args: TArgs) => Promise<unknown> | unknown`
+- `zodInput?: ZodType<TArgs>`
+
+### `VectorStore`
+
+- `upsert(id: string, vector: number[], record: MemoryRecord): Promise<void>`
+- `search(queryVector: number[], k: number): Promise<VectorSearchHit[]>`
+- `delete(id: string): Promise<void>`

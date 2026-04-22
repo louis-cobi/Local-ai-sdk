@@ -27,3 +27,5 @@ Pass `mmprojPath` for vision/audio models. `ctx_shift` defaults to `false` when 
 ## Speech
 
 `createSpeechSynthesizer` is a placeholder until a stable TTS API is available on your `LlamaContext` build.
+
+Full signatures and option details are in [docs/api/llama.md](../../docs/api/llama.md).
